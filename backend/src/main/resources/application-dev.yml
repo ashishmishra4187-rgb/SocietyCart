@@ -1,0 +1,18 @@
+# Local development defaults. Never active in production.
+spring:
+  datasource:
+    password: ${SPRING_DATASOURCE_PASSWORD:348981}
+
+societycart:
+  auth:
+    # Every OTP is this code in dev (it is also printed in the console).
+    fixed-otp: "123456"
+    # Use this on the "Create account" screen to sign up as a society admin.
+    admin-signup-code: "SOCIETY.ADMIN"
+  dev:
+    # Optional: make this number a society admin on startup, e.g. SOCIETYCART_DEV_ADMIN_PHONE=8829971079
+    admin-phone: ${SOCIETYCART_DEV_ADMIN_PHONE:}
+
+logging:
+  level:
+    com.societycart: DEBUG

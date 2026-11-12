@@ -1,0 +1,74 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 12h
+      cookie:
+        name: SC_SESSION
+        http-only: true
+        same-site: lax
+        # Set SESSION_COOKIE_SECURE=true behind HTTPS (required in production).
+        secure: ${SESSION_COOKIE_SECURE:false}
+
+spring:
+  application:
+    name: societycart-backend
+  profiles:
+    # Override with SPRING_PROFILES_ACTIVE=prod in production.
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/societycart_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    # No default on purpose: secrets do not belong in source control. The dev profile supplies a local default.
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway owns the schema. Hibernate only checks that entities match it (never alters it).
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+
+societycart:
+  scheduler:
+    dispatch-rate-ms: 60000
+  geofence:
+    default-radius-meters: 500.0
+  dispatch:
+    # false: locking a pool at cut-off settles prices, then a society admin reviews and dispatches.
+    # true: dispatch to the supplier automatically right after locking (previous behaviour).
+    auto-dispatch: false
+  cors:
+    # Comma-separated web origins allowed to call the API with credentials.
+    allowed-origins: ${SOCIETYCART_ALLOWED_ORIGINS:http://localhost:5173}
+  auth:
+    otp-ttl: PT5M
+    otp-resend-cooldown: PT30S
+    otp-max-attempts: 5
+    otp-max-sends-per-hour: 5
+    # Never set in production (startup fails if the prod profile is active).
+    fixed-otp: ""
+    # Code that lets a person sign up as a society admin (given to society administrators by the platform).
+    # Empty = admin sign-up disabled.
+    admin-signup-code: ""
+
+logging:
+  level:
+    root: INFO
+    com.societycart: INFO
+    org.springframework.web.socket: INFO

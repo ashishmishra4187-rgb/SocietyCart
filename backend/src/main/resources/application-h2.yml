@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:societycart_h2;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  flyway:
+    enabled: false
+
+societycart:
+  scheduler:
+    dispatch-rate-ms: 60000
+  geofence:
+    default-radius-meters: 500.0
+  auth:
+    # H2 is a throwaway local fallback: same dev conveniences as the dev profile.
+    fixed-otp: "123456"
+    admin-signup-code: "SOCIETY.ADMIN"
+
+logging:
+  level:
+    root: INFO
+    com.societycart: DEBUG

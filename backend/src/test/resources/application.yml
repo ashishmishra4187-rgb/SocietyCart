@@ -1,0 +1,36 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: societycart-backend-test
+  datasource:
+    url: jdbc:h2:mem:societycart_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+societycart:
+  scheduler:
+    dispatch-rate-ms: 600000
+  geofence:
+    default-radius-meters: 500.0
+  auth:
+    fixed-otp: "123456"
+    admin-signup-code: "TEST-ADMIN-CODE"
+    otp-resend-cooldown: PT0S
+    otp-max-sends-per-hour: 1000
+
+logging:
+  level:
+    root: INFO
+    com.societycart: DEBUG

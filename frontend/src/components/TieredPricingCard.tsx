@@ -14,10 +14,12 @@ export const TieredPricingCard: React.FC<{ pool: PoolProgress }> = ({ pool }) =>
         <span className="text-4xl font-extrabold text-brand-600 tracking-tight tabular-nums">
           {formatINR(pool.currentUnitPrice)}
         </span>
-        <span className="text-base text-neutral-500 line-through font-medium">
-          <span className="sr-only">Retail price </span>
-          {formatINR(pool.basePrice)}
-        </span>
+       {saved > 0 && (
+  <span className="text-base text-neutral-500 line-through font-medium">
+    <span className="sr-only">Retail price </span>
+    {formatINR(pool.basePrice)}
+  </span>
+)}
       </div>
 
       {saved > 0 && (

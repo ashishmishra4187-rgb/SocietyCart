@@ -26,6 +26,8 @@ export const formatINRFixed = (n: number): string => inrFixed.format(round2(n));
 
 export const savingsPerUnit = (basePrice: number, currentPrice: number): number =>
   Math.max(0, round2(basePrice - currentPrice));
+/** True only when the current price is really below the shop price (so a struck-out price makes sense). */
+export const hasDiscount = (basePrice: number, currentPrice: number): boolean => savingsPerUnit(basePrice, currentPrice) > 0;
 
 export const lineTotal = (unitPrice: number, quantity: number): number => round2(unitPrice * quantity);
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCountdown } from '../hooks/useCountdown';
-import { formatINR } from '../lib/format';
+import { formatINR, hasDiscount } from '../lib/format'; // CHANGED: added hasDiscount
 import { getMaxTarget, getProgressPercent } from '../lib/pool';
 import { closesLabel } from '../lib/time';
 import type { PoolProgress } from '../types';
@@ -41,7 +41,10 @@ export const PoolCard: React.FC<{ pool: PoolProgress }> = ({ pool }) => {
 
       <div className="flex items-baseline gap-2 mb-2.5">
         <span className="text-base font-bold text-neutral-900 tabular-nums">{formatINR(pool.currentUnitPrice)}</span>
-        <span className="text-xs text-neutral-500 line-through tabular-nums">{formatINR(pool.basePrice)}</span>
+        {/* CHANGED: show the struck-out shop price only when there is a real discount */}
+        {hasDiscount(pool.basePrice, pool.currentUnitPrice) && (
+          <span className="text-xs text-neutral-500 line-through tabular-nums">{formatINR(pool.basePrice)}</span>
+        )}
       </div>
 
       <div className="mb-3">

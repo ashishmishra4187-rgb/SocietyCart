@@ -36,9 +36,15 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
             {order.priceIsFinal === false && <span className="text-neutral-500"> (today)</span>}
           </p>
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-xs font-bold text-savings">
-              {order.priceIsFinal === false ? `Saving ${formatINR(totalSaved)} so far` : `You saved ${formatINR(totalSaved)}`}
-            </span>
+            {totalSaved > 0 ? (
+  <span className="text-xs font-bold text-savings">
+    {order.priceIsFinal === false ? `Saving ${formatINR(totalSaved)} so far` : `You saved ${formatINR(totalSaved)}`}
+  </span>
+) : (
+  <span className="text-[11px] font-medium text-neutral-600">
+    {order.priceIsFinal === false ? 'Price drops as neighbours join' : ''}
+  </span>
+)}
             <span className="text-xs font-extrabold text-neutral-900 tabular-nums">{formatINR(order.totalAmount)}</span>
           </div>
         </div>

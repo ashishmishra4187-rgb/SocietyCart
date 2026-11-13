@@ -100,7 +100,13 @@ export const ProfilePage: React.FC = () => {
           <p className="text-sm font-bold text-neutral-900">{profile.societyName}</p>
           {profile.joinCode && <span className="text-xs text-neutral-600 font-mono">Code: {profile.joinCode}</span>}
         </div>
-        <span className="text-[11px] text-neutral-600 font-medium italic text-right max-w-[120px] leading-tight">Contact admin to change</span>
+       {session?.role === 'PLATFORM_ADMIN' ? (
+  <span className="text-[11px] font-bold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2.5 py-1 rounded-full text-right leading-tight">Platform admin</span>
+) : isAdminRole(session?.role) ? (
+  <span className="text-[11px] font-bold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2.5 py-1 rounded-full text-right leading-tight">You manage this society</span>
+) : (
+  <span className="text-[11px] text-neutral-600 font-medium italic text-right max-w-[130px] leading-tight">  </span>
+)}
       </section>
 
       <section aria-label="Delivery settings" className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">

@@ -87,14 +87,26 @@ export const OrderDetailPage: React.FC = () => {
               <dd className="font-semibold text-neutral-900 tabular-nums">{v}</dd>
             </div>
           ))}
-          <div className="flex justify-between items-center text-neutral-700">
-            <dt>Retail price</dt>
-            <dd className="line-through text-neutral-500 tabular-nums">{formatINR(retailTotal)}</dd>
-          </div>
-          <div className="flex justify-between items-center pt-2 border-t border-neutral-100 text-savings font-bold">
-            <dt>{isFinal ? 'You saved' : 'You are saving so far'}</dt>
-            <dd className="text-sm font-extrabold tabular-nums">{formatINR(saved)}</dd>
-          </div>
+
+          {/* CHANGED: show the retail price and "saved" rows only when there is a real saving */}
+          {saved > 0 ? (
+            <>
+              <div className="flex justify-between items-center text-neutral-700">
+                <dt>Retail price</dt>
+                <dd className="line-through text-neutral-500 tabular-nums">{formatINR(retailTotal)}</dd>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-neutral-100 text-savings font-bold">
+                <dt>{isFinal ? 'You saved' : 'You are saving so far'}</dt>
+                <dd className="text-sm font-extrabold tabular-nums">{formatINR(saved)}</dd>
+              </div>
+            </>
+          ) : (
+            !isFinal && (
+              <div className="pt-2 border-t border-neutral-100 text-xs font-medium text-neutral-600">
+                No discount yet. Your price drops as more neighbours join.
+              </div>
+            )
+          )}
         </dl>
 
         {!isFinal && (

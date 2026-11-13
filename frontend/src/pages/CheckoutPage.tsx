@@ -13,7 +13,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePool } from '../hooks/usePoolList';
 import { useStompWebSocket } from '../hooks/useStompWebSocket';
 import { getErrorMessage, getStatus } from '../lib/errors';
-import { formatINR, formatINRFixed, lineTotal } from '../lib/format';
+import { formatINR, formatINRFixed, hasDiscount, lineTotal } from '../lib/format'; // CHANGED: added hasDiscount
 import { maxQuantityFor } from '../lib/pool';
 import { isValidFlat } from '../lib/validation';
 import type { PoolProgress } from '../types';
@@ -138,7 +138,10 @@ export const CheckoutPage: React.FC = () => {
             <h2 className="text-sm font-bold text-neutral-900 truncate leading-snug">{pool.productName}</h2>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-sm font-extrabold text-brand-600 tabular-nums">{formatINRFixed(pool.currentUnitPrice)}</span>
-              <span className="text-xs text-neutral-500 line-through tabular-nums">{formatINRFixed(pool.basePrice)}</span>
+              {/* CHANGED: struck-out shop price only when there is a real discount */}
+              {hasDiscount(pool.basePrice, pool.currentUnitPrice) && (
+                <span className="text-xs text-neutral-500 line-through tabular-nums">{formatINRFixed(pool.basePrice)}</span>
+              )}
               {pool.savingsPercent > 0 && (
                 <span className="text-[10px] font-bold text-savings bg-savings/10 px-1.5 py-0.5 rounded-md">-{pool.savingsPercent}%</span>
               )}

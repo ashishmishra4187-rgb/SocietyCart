@@ -273,7 +273,7 @@ export const LoginPage: React.FC<{ initialMode?: Mode }> = ({ initialMode = 'sig
                 invalid={phone.length === 10 && !phoneValid}
               />
               <p id="phone-hint" className="mt-2 text-xs text-neutral-600">
-                {mode === 'signin' ? 'We will text a one-time code to this number.' : 'We will verify this number with a one-time code.'}
+                {mode === 'signin' ? 'We will send a OTP to this number.' : 'We will verify this number with a OTP.'}
               </p>
               <p id="phone-error" role="alert" className="mt-2 text-xs font-medium text-red-700 empty:hidden">
                 {phone.length === 10 && !phoneValid ? 'Enter a valid 10-digit Indian mobile number.' : ''}

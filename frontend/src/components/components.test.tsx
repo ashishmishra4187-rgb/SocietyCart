@@ -7,6 +7,7 @@ import { TieredPricingCard } from './TieredPricingCard';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { TierEditor } from './admin/TierEditor';
 import { OrderCard } from './OrderCard';
+import { DiscountPopup } from './DiscountPopup';
 import { MemoryRouter } from 'react-router-dom';
 import { makePool } from '../test/utils';
 
@@ -109,3 +110,21 @@ describe('OrderCard live price', () => {
     expect(screen.queryByText(/so far/)).toBeNull();
   });
 });
+
+describe('DiscountPopup', () => {
+  it('renders centered discount popup when percent is unlocked', () => {
+    render(<DiscountPopup percent={15} unitPrice={170} productName="Sunflower Oil" />);
+    expect(screen.getByRole('dialog', { name: /15% discount unlocked celebration/i })).toBeInTheDocument();
+    expect(screen.getByText('15% OFF')).toBeInTheDocument();
+    expect(screen.getByText(/Sunflower Oil/)).toBeInTheDocument();
+    expect(screen.getByText(/₹170/)).toBeInTheDocument();
+  });
+
+  it('can be dismissed with the CTA button', async () => {
+    render(<DiscountPopup percent={20} unitPrice={160} />);
+    const cta = screen.getByRole('button', { name: /Claim Discount/i });
+    await userEvent.click(cta);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+

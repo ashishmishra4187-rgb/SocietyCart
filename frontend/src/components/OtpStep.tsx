@@ -48,21 +48,37 @@ export const OtpStep: React.FC<OtpStepProps> = ({
 
   const changeDigit = (index: number, value: string) => {
     const digits = value.replace(/\D/g, '');
-    const next = [...otp];
+    const prev = otp[index] ?? '';
+
     if (!digits) {
+      const next = [...otp];
       next[index] = '';
       setOtp(next);
       return;
     }
     onClearError();
-    // Android/iOS one-time-code autofill can drop all digits into one box.
-    if (digits.length > 1) {
-      for (let i = 0; i < OTP_LENGTH; i++) next[i] = digits[i] ?? '';
+
+    // Many digits at once, or several digits arriving in an EMPTY box: the OS/browser autofilled the code
+    // (or an IME sent a burst). Spread them across the boxes starting here.
+    if (digits.length >= OTP_LENGTH || (digits.length > 1 && prev === '')) {
+      const next = [...otp];
+      for (let i = 0; i < digits.length && index + i < OTP_LENGTH; i++) next[index + i] = digits[i] ?? '';
       setOtp(next);
-      inputs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
+      inputs.current[Math.min(index + digits.length, OTP_LENGTH - 1)]?.focus();
       return;
     }
-    next[index] = digits;
+
+    // One digit typed. If the box already held a digit it now holds two characters; keep only the newly
+    // typed one (removing one copy of the old digit leaves exactly the new key press).
+    const typed = prev !== '' && digits.length > 1 ? digits.replace(prev, '') : digits;
+    const isLastBox = index === OTP_LENGTH - 1;
+
+    // The code is already complete and the cursor sits in the last box: ignore the extra key press instead
+    // of letting it overwrite the code. (The controlled input snaps back to the existing digit.)
+    if (isLastBox && prev !== '' && digits.length > 1) return;
+
+    const next = [...otp];
+    next[index] = typed.slice(-1);
     setOtp(next);
     if (index < OTP_LENGTH - 1) inputs.current[index + 1]?.focus();
   };

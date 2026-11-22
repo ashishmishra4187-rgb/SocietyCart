@@ -4,7 +4,8 @@ import { JoinDealBar } from '../components/JoinDealBar';
 import { LivePoolMeter } from '../components/LivePoolMeter';
 import { TieredPricingCard } from '../components/TieredPricingCard';
 import { BackLink } from '../components/ui/BackLink';
-import { ClockIcon, ImageIcon } from '../components/ui/Icons';
+import { ClockIcon, TagIcon } from '../components/ui/Icons';
+import { ProductImage } from '../components/ui/ProductImage';
 import { ErrorState, LoadingRegion, Skeleton } from '../components/ui/States';
 import { useAuthContext } from '../context/AuthContext';
 import { useCountdown } from '../hooks/useCountdown';
@@ -27,7 +28,7 @@ export const ProductPoolDetails: React.FC = () => {
     return (
       <LoadingRegion label="Loading deal" className="space-y-4">
         <Skeleton className="w-10 h-10 rounded-full" />
-        <Skeleton className="w-full aspect-[4/3] rounded-2xl" />
+        <Skeleton className="w-full aspect-[4/3] rounded-3xl" />
         <Skeleton className="h-6 w-2/3" />
         <Skeleton className="h-44 rounded-2xl" />
         <Skeleton className="h-40 rounded-2xl" />
@@ -54,27 +55,27 @@ export const ProductPoolDetails: React.FC = () => {
         <BackLink to={back}>Back to deals</BackLink>
       </nav>
 
-      <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-neutral-100 mb-4 border border-neutral-200 shadow-xs flex items-center justify-center">
-        {pool.imageUrl ? (
-          <img src={pool.imageUrl} alt={pool.productName} className="w-full h-full object-cover" />
-        ) : (
-          <div className="flex flex-col items-center justify-center text-neutral-500">
-            <ImageIcon className="w-12 h-12 text-neutral-400 mb-1" />
-            <span className="text-xs font-medium">No image available</span>
-          </div>
-        )}
+      <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden bg-white mb-4 border border-neutral-200 shadow-sm">
+        <ProductImage
+          src={pool.imageUrl}
+          alt={pool.productName}
+          name={pool.productName}
+          loading="eager"
+          className="w-full h-full object-cover"
+        />
         {pool.savingsPercent > 0 && (
-          <span className="absolute top-3 right-3 bg-savings text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
-            -{pool.savingsPercent}%
+          <span className="absolute top-3.5 right-3.5 bg-savings text-white text-xs font-black px-3 py-1 rounded-full shadow-md">
+            -{pool.savingsPercent}% OFF
           </span>
         )}
       </div>
 
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 leading-tight">{pool.productName}</h1>
-        <p className="text-xs font-medium text-neutral-600 mt-1">
-          {pool.supplierName ? `Sold by ${pool.supplierName}` : 'Direct wholesale batch'}
-        </p>
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-600 mb-1">
+          <TagIcon className="w-3.5 h-3.5" />
+          <span>{pool.supplierName ? `Wholesale from ${pool.supplierName}` : 'Direct wholesale batch'}</span>
+        </div>
+        <h1 className="text-2xl font-black tracking-tight text-neutral-900 leading-tight">{pool.productName}</h1>
       </header>
 
       <section className="mb-4" aria-label="Tiered pricing details">
@@ -94,4 +95,5 @@ export const ProductPoolDetails: React.FC = () => {
     </>
   );
 };
+
 export default ProductPoolDetails;

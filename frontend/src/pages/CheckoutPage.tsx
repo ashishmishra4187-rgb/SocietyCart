@@ -2,19 +2,22 @@ import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createOrder } from '../api/orderApi';
+import { DiscountPopup } from '../components/DiscountPopup';
 import { PriceSummary } from '../components/PriceSummary';
 import { QuantityStepper } from '../components/QuantityStepper';
 import { BackLink } from '../components/ui/BackLink';
+import { ProductImage } from '../components/ui/ProductImage';
 import { Spinner } from '../components/ui/Spinner';
 import { ErrorState, LoadingRegion, Skeleton } from '../components/ui/States';
+import { TagIcon } from '../components/ui/Icons';
 import { useAuthContext } from '../context/AuthContext';
 import { useCountdown } from '../hooks/useCountdown';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePool } from '../hooks/usePoolList';
 import { useStompWebSocket } from '../hooks/useStompWebSocket';
 import { getErrorMessage, getStatus } from '../lib/errors';
-import { formatINR, formatINRFixed, hasDiscount, lineTotal } from '../lib/format'; // CHANGED: added hasDiscount
-import { maxQuantityFor } from '../lib/pool';
+import { formatINR, formatINRFixed, hasDiscount, lineTotal } from '../lib/format';
+import { maxQuantityFor, projectOrder } from '../lib/pool';
 import { isValidFlat } from '../lib/validation';
 import type { PoolProgress } from '../types';
 
@@ -73,7 +76,7 @@ export const CheckoutPage: React.FC = () => {
     return (
       <LoadingRegion label="Loading checkout" className="space-y-4">
         <Skeleton className="h-6 w-36 rounded-full" />
-        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-28 rounded-2xl" />
         <Skeleton className="h-20 rounded-2xl" />
         <Skeleton className="h-44 rounded-2xl" />
       </LoadingRegion>
@@ -88,12 +91,24 @@ export const CheckoutPage: React.FC = () => {
   const busy = orderMutation.isPending;
   const maxQty = maxQuantityFor(pool);
   const flatValid = isValidFlat(flatNumber);
-  const total = lineTotal(pool.currentUnitPrice, quantity);
+  // The server counts your own units towards the discount level, so preview the price you'd actually get.
+  const projection = projectOrder(pool, quantity);
+  const total = lineTotal(projection.unitPrice, quantity);
+  const unitsToAdd = projection.next?.unitsNeeded ?? 0;
+  const canAddToUnlock = projection.next !== null && quantity + unitsToAdd <= maxQty;
   const priceChanged = firstSeenPrice.current !== null && pool.currentUnitPrice !== firstSeenPrice.current;
   const societyRoute = session?.societyId ? `/s/${session.societyId}` : '/';
 
   return (
     <>
+      {/* Centered celebratory modal when a higher discount tier is unlocked */}
+      <DiscountPopup
+        percent={projection.newlyUnlocked ? projection.discountPercent : null}
+        unitPrice={projection.unitPrice}
+        productName={pool.productName}
+        imageUrl={pool.imageUrl}
+      />
+
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center justify-between gap-2">
         <BackLink to={`/pools/${pool.poolWindowId}`}>Back to details</BackLink>
         <h1 className="text-base font-bold text-neutral-900">Confirm your order</h1>
@@ -126,31 +141,97 @@ export const CheckoutPage: React.FC = () => {
       )}
 
       <div className="space-y-4">
-        <section aria-label="Product" className="bg-white rounded-2xl border border-neutral-200 p-4 shadow-sm flex items-center gap-3.5">
-          <div className="w-16 h-16 rounded-xl bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center border border-neutral-100">
-            {pool.imageUrl ? (
-              <img src={pool.imageUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[10px] text-neutral-500 font-medium">No image</span>
+        {/* Prominent, attractive item showcase card for items to be ordered */}
+        <section
+          aria-label="Product"
+          className="bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5 shadow-sm flex items-center gap-4 transition-all hover:border-neutral-300"
+        >
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-neutral-100 overflow-hidden shrink-0 border border-neutral-100 shadow-xs relative">
+            <ProductImage
+              src={pool.imageUrl}
+              alt={pool.productName}
+              name={pool.productName}
+              className="w-full h-full object-cover"
+            />
+            {pool.savingsPercent > 0 && (
+              <span className="absolute top-1.5 left-1.5 bg-savings text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs">
+                -{pool.savingsPercent}%
+              </span>
             )}
           </div>
+
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-bold text-neutral-900 truncate leading-snug">{pool.productName}</h2>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-sm font-extrabold text-brand-600 tabular-nums">{formatINRFixed(pool.currentUnitPrice)}</span>
-              {/* CHANGED: struck-out shop price only when there is a real discount */}
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-0.5">
+              <TagIcon className="w-3 h-3 text-brand-600" />
+              <span>{pool.supplierName ? `Sold by ${pool.supplierName}` : 'Wholesale Direct'}</span>
+            </div>
+
+            <h2 className="text-sm sm:text-base font-bold text-neutral-900 truncate leading-snug">
+              {pool.productName}
+            </h2>
+
+            <div className="flex flex-wrap items-baseline gap-2 mt-1.5">
+              <span className="text-base sm:text-lg font-extrabold text-brand-600 tabular-nums">
+                {formatINRFixed(pool.currentUnitPrice)}
+              </span>
               {hasDiscount(pool.basePrice, pool.currentUnitPrice) && (
-                <span className="text-xs text-neutral-500 line-through tabular-nums">{formatINRFixed(pool.basePrice)}</span>
+                <span className="text-xs text-neutral-400 line-through tabular-nums">
+                  {formatINRFixed(pool.basePrice)}
+                </span>
               )}
               {pool.savingsPercent > 0 && (
-                <span className="text-[10px] font-bold text-savings bg-savings/10 px-1.5 py-0.5 rounded-md">-{pool.savingsPercent}%</span>
+                <span className="text-[10px] font-bold text-savings bg-savings/10 px-2 py-0.5 rounded-full">
+                  Save {pool.savingsPercent}%
+                </span>
               )}
             </div>
+
+            <p className="text-[11px] text-neutral-500 mt-1">
+              SKU: <span className="font-mono font-medium text-neutral-700">{pool.productSku}</span>
+            </p>
           </div>
         </section>
 
+        {/* Quantity selector */}
         <QuantityStepper quantity={quantity} onChange={setQuantity} min={1} max={maxQty} disabled={closed || busy} />
 
+        {/* Nudge when user's quantity unlocked a new tier */}
+        {projection.newlyUnlocked && !closed && (
+          <div
+            role="status"
+            className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/10 border border-savings/30 text-xs font-bold text-savings shadow-xs animate-fadeIn flex items-center gap-2.5"
+          >
+            <span className="text-xl">🎉</span>
+            <div>
+              <p className="text-neutral-900 font-extrabold text-xs">
+                You unlocked {projection.newlyUnlocked.discountPercent}% OFF for everyone!
+              </p>
+              <p className="text-neutral-600 text-[11px] font-normal mt-0.5">
+                Your {quantity} {quantity === 1 ? 'unit takes' : 'units take'} the pool to {projection.projectedQuantity} units.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Offer nudge to add more units to unlock the next discount tier */}
+        {canAddToUnlock && projection.next && !closed && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setQuantity(quantity + unitsToAdd)}
+            className="w-full flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-brand-50/60 to-emerald-50/60 border border-dashed border-brand-400 text-left hover:border-brand-600 hover:bg-brand-50 transition-all disabled:opacity-60 group shadow-xs"
+          >
+            <span className="text-xs font-semibold text-neutral-800">
+              Add <strong className="text-brand-600 font-bold">{unitsToAdd}</strong> more {unitsToAdd === 1 ? 'unit' : 'units'} to unlock{' '}
+              <strong className="text-savings font-black underline decoration-savings/40">{projection.next.tier.discountPercent}% off</strong>
+            </span>
+            <span className="text-xs font-extrabold text-brand-600 bg-white px-2.5 py-1 rounded-lg border border-brand-200 group-hover:bg-brand-600 group-hover:text-white transition-colors shrink-0 shadow-xs">
+              +{unitsToAdd}
+            </span>
+          </button>
+        )}
+
+        {/* Flat delivery details */}
         <section aria-label="Delivery details" className="bg-white rounded-2xl border border-neutral-200 p-4 shadow-sm">
           <label htmlFor="flatNumber" className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-2">
             Flat / door number
@@ -176,10 +257,17 @@ export const CheckoutPage: React.FC = () => {
           </p>
         </section>
 
-        <PriceSummary unitPrice={pool.currentUnitPrice} quantity={quantity} timeRemainingText={time.ended ? 'ended' : time.label} />
+        {/* Price and discount summary */}
+        <PriceSummary
+          unitPrice={projection.unitPrice}
+          currentUnitPrice={pool.currentUnitPrice}
+          basePrice={pool.basePrice}
+          quantity={quantity}
+          timeRemainingText={time.ended ? 'ended' : time.label}
+        />
 
         {submitError && (
-          <p role="alert" className="text-xs font-medium text-red-700">
+          <p role="alert" className="text-xs font-medium text-red-700 p-3 bg-red-50 rounded-xl border border-red-200">
             {submitError}
           </p>
         )}
@@ -213,4 +301,5 @@ export const CheckoutPage: React.FC = () => {
     </>
   );
 };
+
 export default CheckoutPage;

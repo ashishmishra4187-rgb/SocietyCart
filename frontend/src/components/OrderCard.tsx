@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatINR, round2 } from '../lib/format';
 import type { OrderResponse } from '../types';
+import { ProductImage } from './ui/ProductImage';
 import { StatusBadge } from './ui/StatusBadge';
 
 interface OrderCardProps {
@@ -16,19 +17,22 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
   const isCancellable = order.status === 'COMMITTED' && (order.poolStatus ?? 'OPEN') === 'OPEN';
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-200 p-3.5 shadow-sm hover:border-neutral-300 transition-colors">
+    <div className="bg-white rounded-2xl border border-neutral-200 p-3.5 shadow-sm hover:border-neutral-300 transition-all hover:shadow-md group">
       <Link to={`/orders/${order.orderId}`} className="flex items-center gap-3.5 rounded-xl">
-        <div className="w-16 h-16 rounded-xl bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center border border-neutral-100">
-          {order.imageUrl ? (
-            <img src={order.imageUrl} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-[10px] text-neutral-500 font-medium">No image</span>
-          )}
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center border border-neutral-100 shadow-xs relative">
+          <ProductImage
+            src={order.imageUrl}
+            alt={order.productName}
+            name={order.productName}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="text-sm font-bold text-neutral-900 truncate leading-snug">{order.productName}</h3>
+            <h3 className="text-sm font-bold text-neutral-900 truncate leading-snug group-hover:text-brand-600 transition-colors">
+              {order.productName}
+            </h3>
             <StatusBadge status={order.status} />
           </div>
           <p className="text-xs text-neutral-700 font-medium">
@@ -37,14 +41,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
           </p>
           <div className="flex items-center justify-between mt-1.5">
             {totalSaved > 0 ? (
-  <span className="text-xs font-bold text-savings">
-    {order.priceIsFinal === false ? `Saving ${formatINR(totalSaved)} so far` : `You saved ${formatINR(totalSaved)}`}
-  </span>
-) : (
-  <span className="text-[11px] font-medium text-neutral-600">
-    {order.priceIsFinal === false ? 'Price drops as neighbours join' : ''}
-  </span>
-)}
+              <span className="text-xs font-bold text-savings">
+                {order.priceIsFinal === false ? `Saving ${formatINR(totalSaved)} so far` : `You saved ${formatINR(totalSaved)}`}
+              </span>
+            ) : (
+              <span className="text-[11px] font-medium text-neutral-600">
+                {order.priceIsFinal === false ? 'Price drops as neighbours join' : ''}
+              </span>
+            )}
             <span className="text-xs font-extrabold text-neutral-900 tabular-nums">{formatINR(order.totalAmount)}</span>
           </div>
         </div>
@@ -61,7 +65,11 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
               Cancel order
             </button>
           ) : (
-            <div role="alertdialog" aria-label="Confirm cancellation" className="flex items-center justify-between w-full bg-red-50 p-2 rounded-xl border border-red-200 animate-fadeIn">
+            <div
+              role="alertdialog"
+              aria-label="Confirm cancellation"
+              className="flex items-center justify-between w-full bg-red-50 p-2 rounded-xl border border-red-200 animate-fadeIn"
+            >
               <span className="text-[11px] font-medium text-red-900">Cancel this deal order?</span>
               <div className="flex items-center gap-1.5">
                 <button
@@ -88,4 +96,5 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
     </div>
   );
 };
+
 export default OrderCard;

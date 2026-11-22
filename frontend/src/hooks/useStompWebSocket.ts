@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isPoolProgress } from '../lib/guards';
 import type { PoolProgress } from '../types';
 
-const resolveBrokerUrl = (): string => {
+export const resolveBrokerUrl = (): string => {
   const configured = import.meta.env.VITE_WS_URL;
   if (configured) return configured;
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';

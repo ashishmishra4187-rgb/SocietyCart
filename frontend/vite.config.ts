@@ -9,7 +9,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': { target: backend, changeOrigin: true },
+      '/api': {
+        target: backend,
+        changeOrigin: true,
+        headers: {
+          Origin: 'http://localhost:5173',
+        },
+      },
       '/ws': { target: backend.replace(/^http/, 'ws'), ws: true, changeOrigin: true },
     },
   },

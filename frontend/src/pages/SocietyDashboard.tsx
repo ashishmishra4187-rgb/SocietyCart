@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, LoadingRegion, Skeleton } from '../components/u
 import { useAuthContext } from '../context/AuthContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePoolList, useSocietyDetails } from '../hooks/usePoolList';
+import { useSocietyPoolsLive } from '../hooks/useSocietyPoolsLive';
 
 type FilterType = 'all' | 'closing' | 'savings';
 const FILTERS: { key: FilterType; label: string }[] = [
@@ -21,6 +22,7 @@ export const SocietyDashboard: React.FC = () => {
   const { session } = useAuthContext();
   const { data: society, isLoading: societyLoading } = useSocietyDetails(societyId);
   const { data: pools, isLoading, isError, refetch } = usePoolList(societyId);
+   useSocietyPoolsLive(societyId);
   useDocumentTitle(society?.name ?? 'Deals');
 
   const openPools = useMemo(() => {

@@ -53,4 +53,4 @@ SocietyCart/
 │       ├── components/       # LivePoolMeter, TieredPricingCard, PackingListCard
 │       ├── hooks/            # useStompWebSocket, useCountdown, useAuth
 │       └── pages/            # SocietyDashboard, ProductPoolDetails, SocietyAdminPage
-└── docs/screenshots/         # UI previews
+

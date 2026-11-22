@@ -287,11 +287,21 @@ class PoolServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> service.createPool(createRequest(NOW.plusSeconds(7200), "200", "250", "SKU-MILK"), admin));
 
-        when(poolRepository.existsBySocietyIdAndProductIdAndStatus(society.getId(), "SKU-MILK", PoolWindow.PoolStatus.OPEN))
-                .thenReturn(true);
+        when(poolRepository.existsBySocietyIdAndProductIdAndStatusAndEndTimeAfter(
+                society.getId(), "SKU-MILK", PoolWindow.PoolStatus.OPEN, NOW)).thenReturn(true);
         assertThrows(ConflictException.class,
                 () -> service.createPool(createRequest(NOW.plusSeconds(7200), "200", "120", "SKU-MILK"), admin));
         verify(poolRepository, never()).save(any(PoolWindow.class));
+    }
+    @Test
+    @DisplayName("Only deals that are still running block a new deal for the same product (an expired one does not)")
+    void createPoolIgnoresExpiredDeals() {
+        service.createPool(createRequest(NOW.plusSeconds(7200), "200", "120", "SKU-MILK"), admin);
+
+        // The duplicate check is asked about deals closing after "now", so an expired-but-not-yet-locked deal is ignored.
+        verify(poolRepository).existsBySocietyIdAndProductIdAndStatusAndEndTimeAfter(
+                society.getId(), "SKU-MILK", PoolWindow.PoolStatus.OPEN, NOW);
+        verify(poolRepository).save(any(PoolWindow.class));
     }
 
     @Test

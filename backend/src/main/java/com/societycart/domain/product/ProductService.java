@@ -2,6 +2,7 @@ package com.societycart.domain.product;
 
 import com.societycart.common.ApiExceptions.ConflictException;
 import com.societycart.domain.pool.PoolAccess;
+import com.societycart.domain.pool.PoolRepository;
 import com.societycart.domain.resident.Resident;
 import com.societycart.domain.society.Society;
 import com.societycart.domain.society.SocietyRepository;
@@ -26,10 +27,12 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final SocietyRepository societyRepository;
+    private final PoolRepository poolRepository;
 
-    public ProductService(ProductRepository productRepository, SocietyRepository societyRepository) {
+    public ProductService(ProductRepository productRepository, SocietyRepository societyRepository, PoolRepository poolRepository) {
         this.productRepository = productRepository;
         this.societyRepository = societyRepository;
+        this.poolRepository = poolRepository;
     }
 
     public List<ProductView> list(UUID societyId, Resident admin) {
@@ -80,7 +83,13 @@ public class ProductService {
         if (req.active() != null) {
             product.setActive(req.active());
         }
-        return toView(productRepository.save(product));
+        ProductView view = toView(productRepository.save(product));
+        if (req.imageUrl() != null) {
+            // The photo was part of this edit: existing deals of this product show it too.
+            int updated = poolRepository.updateImageForProduct(product.getSociety().getId(), product.getSku(), product.getImageUrl());
+            log.info("Product {} photo changed; updated {} existing deal(s)", product.getSku(), updated);
+        }
+        return view;
     }
 
     static ProductView toView(Product p) {

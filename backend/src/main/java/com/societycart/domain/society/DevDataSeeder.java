@@ -1,10 +1,10 @@
 package com.societycart.domain.society;
 
 import com.societycart.domain.pool.PoolRepository;
-import com.societycart.domain.product.ProductRepository;
-import com.societycart.domain.product.ProductService;
 import com.societycart.domain.pool.PoolService;
 import com.societycart.domain.pool.PoolWindow;
+import com.societycart.domain.product.ProductRepository;
+import com.societycart.domain.product.ProductService;
 import com.societycart.domain.resident.Resident;
 import com.societycart.domain.resident.ResidentRepository;
 import com.societycart.domain.resident.ResidentService;
@@ -17,7 +17,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -30,9 +29,12 @@ import java.util.List;
  * <ul>
  *   <li>Creates demo accounts if there are no residents yet: admin 9000000001 and resident 9000000002.</li>
  *   <li>Optionally promotes {@code societycart.dev.admin-phone} to society admin.</li>
- *   <li>Opens fresh demo pools when the society has no open deal (the pools seeded by the SQL migration
- *       expire 24h after the first start).</li>
+ *   <li>Closes out demo deals whose time has run out, then opens fresh demo deals when the society has none running
+ *       (the deals seeded earlier expire 24h after they are created).</li>
  * </ul>
+ *
+ * This runner must NEVER stop the application from starting: every step is guarded, and each service call runs in
+ * its own transaction (so one failed step cannot mark the others rollback-only).
  */
 @Component
 @Profile({"dev", "h2"})
@@ -71,9 +73,17 @@ public class DevDataSeeder implements CommandLineRunner {
         this.adminPhone = adminPhone == null ? "" : adminPhone.trim();
     }
 
+    // Deliberately NOT @Transactional: see the class comment.
     @Override
-    @Transactional
     public void run(String... args) {
+        try {
+            seed();
+        } catch (RuntimeException e) {
+            log.warn("DevDataSeeder: demo data could not be created ({}). The app starts anyway.", e.getMessage());
+        }
+    }
+
+    private void seed() {
         List<Society> societies = societyRepository.findByActiveTrue();
         if (societies.isEmpty()) {
             log.info("DevDataSeeder: no societies yet, nothing to seed.");
@@ -91,15 +101,29 @@ public class DevDataSeeder implements CommandLineRunner {
                 : residentRepository.findByPhone("9000000001").orElse(null);
 
         Instant now = clock.instant();
+        closeExpiredDeals(now);
+
         if (admin != null && poolRepository.findActivePoolsForSociety(society.getId(), now, PoolWindow.PoolStatus.OPEN).isEmpty()) {
             Instant cutoff = now.plus(Duration.ofHours(24));
-            openDemoPool(admin, society, "DEMO-MILK-A2", "Organic Desi Cow A2 Milk 1L (Pack of 2)", "200", "120", cutoff,
+            int opened = 0;
+            opened += openDemoPool(admin, society, "DEMO-MILK-A2", "Organic Desi Cow A2 Milk 1L (Pack of 2)", "200", "120", cutoff,
                     tier(10, "10"), tier(20, "28"), tier(30, "35"));
-            openDemoPool(admin, society, "DEMO-ATTA-5KG", "Whole Wheat Atta 5kg", "450", "350", cutoff,
+            opened += openDemoPool(admin, society, "DEMO-ATTA-5KG", "Whole Wheat Atta 5kg", "450", "350", cutoff,
                     tier(10, "5"), tier(25, "12"), tier(50, "20"));
-            openDemoPool(admin, society, "DEMO-OIL-1L", "Sunflower Oil 1L", "180", "130", cutoff,
+            opened += openDemoPool(admin, society, "DEMO-OIL-1L", "Sunflower Oil 1L", "180", "130", cutoff,
                     tier(10, "6"), tier(30, "14"), tier(60, "22"));
-            log.warn("DevDataSeeder: opened 3 fresh demo pools closing in 24h.");
+            log.warn("DevDataSeeder: opened {} fresh demo pool(s) closing in 24h.", opened);
+        }
+    }
+
+    /** Locks (or cancels, if empty) deals whose closing time has passed, exactly as the scheduler would. */
+    private void closeExpiredDeals(Instant now) {
+        for (PoolWindow expired : poolRepository.findExpiredPoolWindows(PoolWindow.PoolStatus.OPEN, now)) {
+            try {
+                poolService.lockExpiredPool(expired.getId());
+            } catch (RuntimeException e) {
+                log.warn("DevDataSeeder: could not close expired deal {}: {}", expired.getId(), e.getMessage());
+            }
         }
     }
 
@@ -107,14 +131,21 @@ public class DevDataSeeder implements CommandLineRunner {
         return new AdminCreatePoolRequest.TierInput(min, new BigDecimal(pct));
     }
 
-    private void openDemoPool(Resident admin, Society society, String sku, String name, String base, String floor,
-                              Instant cutoff, AdminCreatePoolRequest.TierInput... tiers) {
-        // Deals are opened from the society's product list, so make sure the demo product is in it.
-        if (!productRepository.existsBySocietyIdAndSku(society.getId(), sku)) {
-            productService.create(new ProductRequest(society.getId(), sku, name, null, "Groceries", "unit", new BigDecimal(base)), admin);
+    /** Returns 1 if the demo deal was opened, 0 if it could not be (logged, never thrown). */
+    private int openDemoPool(Resident admin, Society society, String sku, String name, String base, String floor,
+                             Instant cutoff, AdminCreatePoolRequest.TierInput... tiers) {
+        try {
+            // Deals are opened from the society's product list, so make sure the demo product is in it.
+            if (!productRepository.existsBySocietyIdAndSku(society.getId(), sku)) {
+                productService.create(new ProductRequest(society.getId(), sku, name, null, "Groceries", "unit", new BigDecimal(base)), admin);
+            }
+            poolService.createPool(new AdminCreatePoolRequest(
+                    society.getId(), sku, new BigDecimal(base), new BigDecimal(floor), cutoff,
+                    List.of(tiers), 20), admin);
+            return 1;
+        } catch (RuntimeException e) {
+            log.warn("DevDataSeeder: skipped demo deal {}: {}", sku, e.getMessage());
+            return 0;
         }
-        poolService.createPool(new AdminCreatePoolRequest(
-                society.getId(), sku, new BigDecimal(base), new BigDecimal(floor), cutoff,
-                List.of(tiers), 20), admin);
     }
 }

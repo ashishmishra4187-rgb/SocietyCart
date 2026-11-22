@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.Modifying;
 
 @Repository
 public interface PoolRepository extends JpaRepository<PoolWindow, UUID> {
@@ -55,4 +56,12 @@ public interface PoolRepository extends JpaRepository<PoolWindow, UUID> {
     Optional<PoolWindow> findByIdForUpdate(@Param("id") UUID id);
 
     boolean existsBySocietyIdAndProductIdAndStatus(UUID societyId, String productId, PoolWindow.PoolStatus status);
+    /**
+     * Is there a deal for this product that is still running? A deal whose closing time has passed is effectively
+     * closed even if the scheduler has not locked it yet, so it must not block opening a new one.
+     */
+    boolean existsBySocietyIdAndProductIdAndStatusAndEndTimeAfter(UUID societyId, String productId, PoolWindow.PoolStatus status, Instant endTime);
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE PoolWindow p SET p.imageUrl = :imageUrl WHERE p.society.id = :societyId AND p.productId = :sku")
+    int updateImageForProduct(@Param("societyId") UUID societyId, @Param("sku") String sku, @Param("imageUrl") String imageUrl);
 }

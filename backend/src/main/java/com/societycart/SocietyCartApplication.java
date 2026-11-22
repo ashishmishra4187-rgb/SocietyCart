@@ -5,11 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-/**
- * SocietyCart - Hyperlocal Community Group-Buying Platform
- *
- * Demand Aggregation Engine & Tiered Pricing Backend.
- */
+
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync

@@ -125,7 +125,7 @@ public class PoolService {
                 .filter(Product::isActive)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Add this product to your product list first (SKU " + sku + ")."));
-        if (poolRepository.existsBySocietyIdAndProductIdAndStatus(society.getId(), sku, PoolWindow.PoolStatus.OPEN)) {
+        if (poolRepository.existsBySocietyIdAndProductIdAndStatusAndEndTimeAfter(society.getId(), sku, PoolWindow.PoolStatus.OPEN, now)) {
             throw new ConflictException("An open pool for this product already exists.");
         }
 

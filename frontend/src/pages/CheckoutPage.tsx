@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createOrder } from '../api/orderApi';
-import { DiscountPopup } from '../components/DiscountPopup';
 import { PriceSummary } from '../components/PriceSummary';
 import { QuantityStepper } from '../components/QuantityStepper';
 import { BackLink } from '../components/ui/BackLink';
@@ -101,14 +100,6 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <>
-      {/* Centered celebratory modal when a higher discount tier is unlocked */}
-      <DiscountPopup
-        percent={projection.newlyUnlocked ? projection.discountPercent : null}
-        unitPrice={projection.unitPrice}
-        productName={pool.productName}
-        imageUrl={pool.imageUrl}
-      />
-
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center justify-between gap-2">
         <BackLink to={`/pools/${pool.poolWindowId}`}>Back to details</BackLink>
         <h1 className="text-base font-bold text-neutral-900">Confirm your order</h1>
@@ -204,7 +195,7 @@ export const CheckoutPage: React.FC = () => {
             <span className="text-xl">🎉</span>
             <div>
               <p className="text-neutral-900 font-extrabold text-xs">
-                You unlocked {projection.newlyUnlocked.discountPercent}% OFF for everyone!
+                Your order unlocks {projection.newlyUnlocked.discountPercent}% off for everyone.
               </p>
               <p className="text-neutral-600 text-[11px] font-normal mt-0.5">
                 Your {quantity} {quantity === 1 ? 'unit takes' : 'units take'} the pool to {projection.projectedQuantity} units.

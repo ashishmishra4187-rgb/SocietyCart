@@ -16,7 +16,7 @@ export const BottomNav: React.FC = () => {
   return (
     <nav
       aria-label="Bottom navigation"
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 py-2 px-6 pb-safe flex justify-around items-center max-w-[640px] mx-auto z-30"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 py-2 px-6 pb-safe flex justify-around items-center max-w-[640px] mx-auto z-30"
     >
       {items.map(({ to, label, Icon, end }) => (
         <NavLink

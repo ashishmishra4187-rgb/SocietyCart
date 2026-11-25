@@ -9,7 +9,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useNow } from '../hooks/useNow';
 import { usePoolList, useSocietyDetails } from '../hooks/usePoolList';
 import { useSocietyPoolsLive } from '../hooks/useSocietyPoolsLive';
-import { almostThere, closingSoon, CLOSING_SOON_HOURS, withSavings } from '../lib/pool';
+import { getNextTier, almostThere, closingSoon, CLOSING_SOON_HOURS, withSavings } from '../lib/pool';
 import type { PoolProgress } from '../types';
 
 type View = 'all' | 'closing' | 'savings';
@@ -55,9 +55,16 @@ export const SocietyDashboard: React.FC = () => {
   const now = useNow();
 
   const { open, closing, savings, nearly } = useMemo(() => {
-    const list = (pools ?? []).filter((p) => p.status === 'OPEN');
+    const list = (pools ?? []).filter((p) => p.status === 'OPEN' && Date.parse(p.cutoffAt) > now);
     return { open: list, closing: closingSoon(list, now), savings: withSavings(list), nearly: almostThere(list) };
   }, [pools, now]);
+
+  const featured = open.reduce<PoolProgress | undefined>((best, candidate) => {
+    if (!best) return candidate;
+    const distance = (p: PoolProgress) => getNextTier(p)?.unitsNeeded ?? Infinity;
+    return distance(candidate) < distance(best) ? candidate : best;
+  }, undefined);
+  const remaining = open.filter(p => p.poolWindowId !== featured?.poolWindowId);
 
   const chips: { key: View; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: open.length },
@@ -77,9 +84,9 @@ export const SocietyDashboard: React.FC = () => {
           ) : (
             <>
               <h1 className="text-xl font-bold tracking-tight text-neutral-900 leading-tight truncate">
-                {society?.name ?? 'Your society'}
+                Society deals
               </h1>
-              {society?.city && <p className="text-xs font-medium text-neutral-600 mt-0.5">{society.city}</p>}
+              {society && <p className="text-xs font-medium text-neutral-600 mt-0.5">{[society.name, society.city].filter(Boolean).join(' \u00b7 ')}</p>}
             </>
           )}
         </div>
@@ -185,9 +192,12 @@ export const SocietyDashboard: React.FC = () => {
           )}
         </section>
       ) : open.length === 0 ? (
-        <EmptyState title="No open deals right now." hint="New pools open every morning at 8 AM." />
+        <EmptyState title="No open deals right now." hint="New deals will appear here when your society opens them." />
       ) : (
-        <DealGrid pools={open} label="Open deals" />
+        <>
+          {featured && <PoolCard key={featured.poolWindowId} pool={featured} featured />}
+          {remaining.length > 0 && <section className="mt-7"><h2 className="market-heading mb-3">More open deals</h2><DealGrid pools={remaining} label="Open deals" /></section>}
+        </>
       )}
     </>
   );

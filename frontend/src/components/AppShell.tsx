@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useAuthContext } from '../context/AuthContext';
 import { BottomNav } from './BottomNav';
 
 interface AppShellProps {
@@ -16,6 +17,9 @@ interface AppShellProps {
 export const AppShell: React.FC<AppShellProps> = ({ nav = false, actionBar = false }) => {
   const mainRef = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
+  const storefront = pathname.startsWith('/s/');
+  const { session } = useAuthContext();
+  const dealsPath = session ? `/s/${session.societyId}` : '/';
   const first = useRef(true);
 
   useEffect(() => {
@@ -28,7 +32,15 @@ export const AppShell: React.FC<AppShellProps> = ({ nav = false, actionBar = fal
   }, [pathname]);
 
   return (
-    <div className="flex justify-center">
+    <div className="market-shell flex flex-col items-center">
+      {nav && <header className={`market-mast ${storefront ? '' : 'market-mast-inner'}`}>
+        <Link className="market-wordmark" to={dealsPath}>SocietyCart</Link>
+        <nav aria-label="Resident navigation" className="market-nav">
+          <NavLink to={dealsPath}>Deals</NavLink>
+          <NavLink to="/orders">My orders</NavLink>
+          <NavLink to="/profile">Profile</NavLink>
+        </nav>
+      </header>}
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-3 focus:py-2 focus:rounded-lg focus:shadow-md focus:text-sm focus:font-semibold"
@@ -39,7 +51,7 @@ export const AppShell: React.FC<AppShellProps> = ({ nav = false, actionBar = fal
         id="main"
         ref={mainRef}
         tabIndex={-1}
-        className={`w-full max-w-[640px] min-h-screen bg-neutral-50 px-4 pt-4 shadow-md focus:outline-none ${
+        className={`w-full ${storefront ? 'market-store' : 'max-w-[640px]'} min-h-screen px-4 pt-4 shadow-md focus:outline-none ${
           nav ? 'pb-24' : actionBar ? 'pb-28' : 'pb-12'
         }`}
       >

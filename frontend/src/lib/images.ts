@@ -14,15 +14,18 @@ export const SHORTLINK_IMAGE_MAP: Record<string, string> = {
 export const DEFAULT_PRODUCT_IMAGES: { keywords: string[]; url: string }[] = [
   {
     keywords: ['atta', 'wheat', 'flour', 'chakki', 'staple'],
-    url: 'https://tse1.mm.bing.net/th/id/OIP.1GfXoe8db2_kRIpw2tXlGQHaEL?pid=ImgDet&rs=1',
+    url: '/market/atta.webp',
   },
   {
     keywords: ['oil', 'sunflower', 'mustard', 'tel', 'ghee', 'cooking'],
-    url: 'https://tse1.mm.bing.net/th/id/OIP.cuJ1hIDBR0sllnADOMs0cQHaHa?pid=ImgDet&rs=1',
+    url: '/market/oil.webp',
   },
   {
     keywords: ['milk', 'dairy', 'doodh', 'curd', 'paneer', 'butter', 'a2', 'cow milk'],
-    url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80',
+    url: '/market/milk.webp',
+  },
+  {
+    keywords: ['dal', 'lentil'], url: '/market/dal.webp',
   },
   {
     keywords: ['rice', 'basmati', 'chawal', 'paddy', 'grain'],

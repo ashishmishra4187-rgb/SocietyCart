@@ -6,7 +6,7 @@ export default {
       colors: {
         brand: {
           50: '#effaf8', 100: '#d5f2ee', 200: '#aae5dd', 300: '#74d0c6', 400: '#3db3a8',
-          500: '#0F766E', 600: '#0D5F58', 700: '#0b4d48', 800: '#093d39', 900: '#082f2c',
+          500: '#176044', 600: '#104C35', 700: '#0b4d48', 800: '#093d39', 900: '#082f2c',
         },
         // Darkened from the mock's #16A34A so small savings text meets WCAG AA (>= 4.5:1 on white).
         savings: '#15803D',

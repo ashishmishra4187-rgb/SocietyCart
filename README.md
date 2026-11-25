@@ -1,6 +1,14 @@
 ﻿# SocietyCart
 
+[![Build and tests](https://github.com/ashishmishra4187-rgb/SocietyCart/actions/workflows/ci.yml/badge.svg)](https://github.com/ashishmishra4187-rgb/SocietyCart/actions/workflows/ci.yml)
+
+**Java 21 · Spring Boot · React · TypeScript · PostgreSQL · WebSockets**
+
 Residents in the same housing society pool grocery orders to earn a volume discount. When a resident crosses a quantity threshold, everyone watching that deal sees the new unit price. Closing the pool settles all participating orders at the final price and produces a flat-by-flat packing list.
+
+**Verified demo.** Two flats ordered one unit each. The second order triggered a 10% discount, both browsers updated from ₹200 to ₹180, and the final packing list reconciled to ₹360.
+
+[Reproduce the demo](#try-the-two-resident-walkthrough) · [Explore the pricing engine](backend/src/main/java/com/societycart/domain/pool/PricingEngine.java) · [See the integration tests](backend/src/test/java/com/societycart/web/ApiFlowIntegrationTest.java)
 
 ## Run a local demo
 

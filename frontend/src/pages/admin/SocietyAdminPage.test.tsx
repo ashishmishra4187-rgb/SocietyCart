@@ -43,12 +43,12 @@ const rowFor = async (name: string) => within((await screen.findByText(name)).cl
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(adminListProducts).mockResolvedValue(products);
-  vi.mocked(adminListPools).mockResolvedValue([]);
+  vi.mocked(adminListPools).mockResolvedValue({ pools: [], total: 0 });
 });
 
 describe('SocietyAdminPage: deals table actions follow the deal status', () => {
   it('OPEN deals can change time, close or be cancelled', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('1', 'OPEN')]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('1', 'OPEN')], total: 1 });
     open();
     const row = await rowFor('Product 1');
     expect(row.getByRole('button', { name: /Change closing time/ })).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('SocietyAdminPage: deals table actions follow the deal status', () => {
   });
 
   it('closed (locked) deals can be dispatched or cancelled but not re-timed', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('2', 'LOCKED')]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('2', 'LOCKED')], total: 1 });
     open();
     const row = await rowFor('Product 2');
     expect(row.getByRole('link', { name: 'Dispatch' })).toHaveAttribute('href', '/admin/pools/2/dispatch');
@@ -66,7 +66,7 @@ describe('SocietyAdminPage: deals table actions follow the deal status', () => {
   });
 
   it('dispatched and delivered deals can only be viewed; cancelled deals have no actions', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('3', 'DISPATCHED'), pool('4', 'DELIVERED'), pool('5', 'CANCELLED')]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('3', 'DISPATCHED'), pool('4', 'DELIVERED'), pool('5', 'CANCELLED')], total: 3 });
     open();
     for (const id of ['3', '4']) {
       const row = await rowFor(`Product ${id}`);
@@ -81,7 +81,7 @@ describe('SocietyAdminPage: deals table actions follow the deal status', () => {
 
 describe('SocietyAdminPage: cancelling a deal', () => {
   it('warns how many neighbours are affected, then cancels', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('1', 'OPEN', { participantCount: 3 })]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('1', 'OPEN', { participantCount: 3 })], total: 1 });
     vi.mocked(adminCancelPool).mockResolvedValue();
     open();
     await userEvent.click((await rowFor('Product 1')).getByRole('button', { name: /Cancel Product 1/ }));
@@ -95,7 +95,7 @@ describe('SocietyAdminPage: cancelling a deal', () => {
   });
 
   it('keeps the dialog open with the reason when the server refuses', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('1', 'OPEN')]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('1', 'OPEN')], total: 1 });
     vi.mocked(adminCancelPool).mockRejectedValue(httpError(409, 'Only open or closed deals can be cancelled.'));
     open();
     await userEvent.click((await rowFor('Product 1')).getByRole('button', { name: /Cancel Product 1/ }));
@@ -105,7 +105,7 @@ describe('SocietyAdminPage: cancelling a deal', () => {
   });
 
   it('does nothing when the admin backs out', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('1', 'OPEN')]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('1', 'OPEN')], total: 1 });
     open();
     await userEvent.click((await rowFor('Product 1')).getByRole('button', { name: /Cancel Product 1/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -115,7 +115,7 @@ describe('SocietyAdminPage: cancelling a deal', () => {
 
 describe('SocietyAdminPage: changing the closing time', () => {
   it('opens the dialog for that deal and saves the new time', async () => {
-    vi.mocked(adminListPools).mockResolvedValue([pool('1', 'OPEN')]);
+    vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('1', 'OPEN')], total: 1 });
     vi.mocked(adminUpdateCutoff).mockResolvedValue(pool('1', 'OPEN'));
     open();
     await userEvent.click((await rowFor('Product 1')).getByRole('button', { name: /Change closing time/ }));

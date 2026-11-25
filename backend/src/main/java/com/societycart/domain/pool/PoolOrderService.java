@@ -10,6 +10,9 @@ import com.societycart.web.PoolBroadcaster;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.societycart.dto.OrderHistoryPage;
+import org.springframework.data.domain.PageRequest;
+import java.util.EnumSet;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -132,6 +135,22 @@ public class PoolOrderService {
         return poolOrderRepository.findAllForResident(residentId).stream()
                 .map(viewMapper::toOrderView)
                 .toList();
+    }
+
+    public OrderHistoryPage history(UUID residentId, boolean past, int page) {
+        var pastStatuses = EnumSet.of(PoolOrder.OrderStatus.DELIVERED, PoolOrder.OrderStatus.CANCELLED);
+        var statuses = past ? pastStatuses : EnumSet.complementOf(pastStatuses);
+        long activeCount = 0;
+        long pastCount = 0;
+        BigDecimal saved = BigDecimal.ZERO;
+        for (var row : poolOrderRepository.totalsByStatus(residentId)) {
+            if (pastStatuses.contains(row.getStatus())) pastCount += row.getOrders();
+            else activeCount += row.getOrders();
+            if (row.getStatus() == PoolOrder.OrderStatus.DELIVERED) saved = row.getSavings();
+        }
+        var orders = poolOrderRepository.history(residentId, statuses, PageRequest.of(page, 20))
+                .stream().map(viewMapper::toOrderView).toList();
+        return new OrderHistoryPage(orders, activeCount, pastCount, saved);
     }
 
     public OrderDetailView getOrder(UUID orderId, UUID residentId) {

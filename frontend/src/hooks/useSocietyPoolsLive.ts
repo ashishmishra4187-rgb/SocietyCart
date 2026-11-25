@@ -2,19 +2,26 @@ import { useEffect } from 'react';
 import { Client } from '@stomp/stompjs';
 import { useQueryClient } from '@tanstack/react-query';
 import { resolveBrokerUrl } from './useStompWebSocket';
+import { isPoolProgress } from '../lib/guards';
+import type { PoolProgress } from '../types';
 
-/**
- * Keeps a society's deal list fresh. The backend announces every new or changed deal on
- * `/topic/societies/{societyId}/pools`; we simply refetch the list when that happens, so a deal an admin has just
- * opened appears on residents' screens without a reload. Reconnects automatically and refetches on every
- * (re)connect to catch anything missed while offline.
- */
 export const useSocietyPoolsLive = (societyId?: string): void => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!societyId) return;
-    const refresh = () => void queryClient.invalidateQueries({ queryKey: ['pools', 'society', societyId] });
+    const queryKey = ['pools', 'society', societyId];
+    const refresh = () => void queryClient.invalidateQueries({ queryKey });
+
+    // If an HTTP snapshot overlaps an event it can overwrite newer prices.
+    // Reconcile once after that snapshot finishes, regardless of the number of events.
+    let reconcile = false;
+    const unsubscribe = queryClient.getQueryCache().subscribe(event => {
+      if (!reconcile || event.type !== 'updated' || event.action.type !== 'success' ||
+          event.action.manual || event.query !== queryClient.getQueryCache().find({ queryKey, exact: true })) return;
+      reconcile = false;
+      refresh();
+    });
 
     const client = new Client({
       brokerURL: resolveBrokerUrl(),
@@ -22,13 +29,26 @@ export const useSocietyPoolsLive = (societyId?: string): void => {
       heartbeatIncoming: 10_000,
       heartbeatOutgoing: 10_000,
       onConnect: () => {
+        client.subscribe(`/topic/societies/${societyId}/pools`, ({ body }) => {
+          let pool: unknown;
+          try { pool = JSON.parse(body); } catch { return; }
+          if (!isPoolProgress(pool)) return;
+          if (queryClient.getQueryState(queryKey)?.fetchStatus === 'fetching') reconcile = true;
+          const update = pool;
+          queryClient.setQueryData<PoolProgress[]>(queryKey, previous => {
+            if (!previous) return previous; // The initial snapshot supplies the complete list.
+            if (update.status !== 'OPEN') return previous.filter(p => p.poolWindowId !== update.poolWindowId);
+            if (!previous.some(p => p.poolWindowId === update.poolWindowId)) return [update, ...previous];
+            return previous.map(p => p.poolWindowId === update.poolWindowId ? update : p);
+          });
+        });
         refresh();
-        client.subscribe(`/topic/societies/${societyId}/pools`, refresh);
       },
     });
 
     client.activate();
     return () => {
+      unsubscribe();
       void client.deactivate();
     };
   }, [societyId, queryClient]);

@@ -316,22 +316,22 @@ describe('MyOrdersPage', () => {
   });
 
   it('keeps locked/dispatched orders in Active and finished ones in Past', async () => {
-    vi.mocked(myOrders).mockResolvedValue([
-      order({ orderId: 'a', productName: 'Committed item' }),
-      order({ orderId: 'b', productName: 'Dispatched item', status: 'DISPATCHED' }),
-      order({ orderId: 'c', productName: 'Delivered item', status: 'DELIVERED' }),
-    ] as never);
+    vi.mocked(myOrders).mockImplementation(async past => ({
+      orders: past ? [order({ orderId: 'c', productName: 'Delivered item', status: 'DELIVERED' })] :
+        [order({ orderId: 'a', productName: 'Committed item' }), order({ orderId: 'b', productName: 'Dispatched item', status: 'DISPATCHED' })],
+      active: 2, past: 1, saved: 20,
+    } as never));
     renderApp(<MyOrdersPage />, { route: '/orders', path: '/orders' });
     expect(await screen.findByText('Committed item')).toBeInTheDocument();
     expect(screen.getByText('Dispatched item')).toBeInTheDocument();
     expect(screen.queryByText('Delivered item')).toBeNull();
     await userEvent.click(screen.getByRole('tab', { name: /Past/ }));
-    expect(screen.getByText('Delivered item')).toBeInTheDocument();
+    expect(await screen.findByText('Delivered item')).toBeInTheDocument();
     expect(screen.getByLabelText('Savings summary')).toHaveTextContent('₹20');
   });
 
   it('cancels with confirmation and reports failures', async () => {
-    vi.mocked(myOrders).mockResolvedValue([order({})] as never);
+    vi.mocked(myOrders).mockResolvedValue({ orders: [order({})], active: 1, past: 0, saved: 0 } as never);
     vi.mocked(cancelOrder).mockRejectedValue(httpError(409, 'Pool already locked'));
     renderApp(<MyOrdersPage />, { route: '/orders', path: '/orders' });
     await userEvent.click(await screen.findByRole('button', { name: 'Cancel order' }));

@@ -1,3 +1,4 @@
+import { HistoryPager } from '../../components/HistoryPager';
 import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -47,12 +48,14 @@ export const SocietyAdminPage: React.FC = () => {
   const [cancelling, setCancelling] = useState<PoolProgress | null>(null);
   const [editingTime, setEditingTime] = useState<PoolProgress | null>(null);
 
-  const { data: pools, isLoading, isError, refetch } = useQuery<PoolProgress[]>({
-    queryKey: ['admin', 'pools', societyId],
-    queryFn: () => adminListPools(societyId as string),
+  const [page, setPage] = useState(0);
+  const { data: history, isLoading, isError, refetch } = useQuery({
+    queryKey: ['admin', 'pools', societyId, page],
+    queryFn: () => adminListPools(societyId as string, page),
     enabled: Boolean(societyId),
   });
 
+  const pools = history?.pools;
   const { data: products } = useQuery<Product[]>({
     queryKey: ['admin', 'products', societyId],
     queryFn: () => adminListProducts(societyId as string),
@@ -68,9 +71,9 @@ export const SocietyAdminPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: adminCreatePool,
-    onSuccess: (newPool) => {
-      queryClient.setQueryData<PoolProgress[]>(['admin', 'pools', societyId], (old = []) => [newPool, ...old]);
-      void queryClient.invalidateQueries({ queryKey: ['pools'] });
+    onSuccess: () => {
+      setPage(0);
+      refreshPools();
       setProductSku('');
       setBasePrice('');
       setFloorPrice('');
@@ -265,7 +268,7 @@ export const SocietyAdminPage: React.FC = () => {
       <section aria-label="Existing pools" className="bg-white rounded-3xl border border-neutral-200 p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-neutral-900">Existing pools</h2>
-          <span className="text-xs font-semibold text-neutral-600">{pools?.length ?? 0} total</span>
+          <span className="text-xs font-semibold text-neutral-600">{history?.total ?? 0} total</span>
         </div>
 
         {isLoading ? (
@@ -362,6 +365,7 @@ export const SocietyAdminPage: React.FC = () => {
             </table>
           </div>
         )}
+        <HistoryPager page={page} total={history?.total ?? 0} onPage={setPage} />
       </section>
 
       <EditCutoffDialog pool={editingTime} onClose={() => setEditingTime(null)} />

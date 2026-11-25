@@ -1,5 +1,7 @@
 package com.societycart.web;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import com.societycart.auth.AuthenticatedResident;
 import com.societycart.domain.pool.PoolService;
 import com.societycart.domain.resident.ResidentService;
@@ -43,6 +45,12 @@ public class AdminPoolController {
     @GetMapping
     public List<PoolView> list(@AuthenticationPrincipal AuthenticatedResident me, @RequestParam UUID societyId) {
         return poolService.listForAdmin(societyId, residentService.requireActive(me.residentId()));
+    }
+
+    @GetMapping("/history")
+    public PoolService.PoolHistory history(@AuthenticationPrincipal AuthenticatedResident me, @RequestParam UUID societyId,
+            @RequestParam(defaultValue = "0") @Min(0) @Max(100000000) int page) {
+        return poolService.historyForAdmin(societyId, residentService.requireActive(me.residentId()), page);
     }
 
     @GetMapping("/{id}")

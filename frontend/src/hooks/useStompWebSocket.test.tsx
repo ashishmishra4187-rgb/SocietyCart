@@ -31,6 +31,7 @@ vi.mock('@stomp/stompjs', () => ({
   },
 }));
 
+import { useSocietyPoolsLive } from './useSocietyPoolsLive';
 import { useStompWebSocket } from './useStompWebSocket';
 
 const setup = () => {
@@ -72,4 +73,22 @@ describe('useStompWebSocket', () => {
     unmount();
     expect(h.deactivate).toHaveBeenCalled();
   });
+});
+
+it('applies society updates without reloading the list for each order', () => {
+  const client = new QueryClient();
+  const key = ['pools', 'society', 'soc-1'];
+  const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  const pool = makePool();
+  client.setQueryData(key, [pool]);
+  const refresh = vi.spyOn(client, 'invalidateQueries');
+  renderHook(() => useSocietyPoolsLive('soc-1'), { wrapper });
+  act(() => h.config.onConnect());
+  expect(refresh).toHaveBeenCalledTimes(1);
+  const updated = { ...pool, aggregateQuantity: 12 };
+  act(() => h.handler!({ body: JSON.stringify(updated) }));
+  expect(client.getQueryData(key)).toEqual([updated]);
+  act(() => h.handler!({ body: JSON.stringify({ ...updated, status: 'LOCKED' }) }));
+  expect(client.getQueryData(key)).toEqual([]);
+  expect(refresh).toHaveBeenCalledTimes(1);
 });

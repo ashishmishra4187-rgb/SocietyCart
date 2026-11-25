@@ -1,5 +1,6 @@
 package com.societycart.web.error;
 
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import com.societycart.common.ApiExceptions.ConflictException;
 import com.societycart.common.ApiExceptions.ForbiddenException;
 import com.societycart.common.ApiExceptions.TooManyRequestsException;
@@ -40,7 +41,7 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler({IllegalArgumentException.class, HttpMessageNotReadableException.class,
-            MissingServletRequestParameterException.class})
+            MissingServletRequestParameterException.class, HandlerMethodValidationException.class})
     public ResponseEntity<ErrorResponse> badRequest(Exception e) {
         String message = e instanceof IllegalArgumentException ? e.getMessage() : "Malformed or incomplete request.";
         return build(HttpStatus.BAD_REQUEST, message);

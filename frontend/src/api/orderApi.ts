@@ -33,8 +33,15 @@ export const cancelOrder = async (poolId: string, orderId: string): Promise<void
   await axiosClient.delete(`/api/pools/${encodeURIComponent(poolId)}/orders/${encodeURIComponent(orderId)}`);
 };
 
-export const myOrders = async (): Promise<OrderResponse[]> => {
-  const { data } = await axiosClient.get<OrderResponse[]>('/api/orders/me');
+export interface OrderHistory {
+  orders: OrderResponse[];
+  active: number;
+  past: number;
+  saved: number;
+}
+
+export const myOrders = async (past: boolean, page: number): Promise<OrderHistory> => {
+  const { data } = await axiosClient.get<OrderHistory>('/api/orders/me/history', { params: { past, page } });
   return data;
 };
 

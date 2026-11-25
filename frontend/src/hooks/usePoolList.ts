@@ -21,7 +21,7 @@ export const usePoolList = (societyId?: string) =>
     queryFn: () => getSocietyPools(societyId as string),
     enabled: Boolean(societyId),
     staleTime: 30 * 1000,
-     refetchInterval: 30 * 1000,         // ADDED: safety net, re-check every 30 s
+    refetchInterval: 30 * 1000, // Recover missed broadcasts while the list is visible.
     refetchOnWindowFocus: 'always',
   });
 

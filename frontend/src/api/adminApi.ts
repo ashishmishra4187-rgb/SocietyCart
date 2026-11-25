@@ -11,8 +11,8 @@ export interface CreatePoolPayload {
   tiers: { minQuantity: number; discountPercent: number }[];
 }
 
-export const adminListPools = async (societyId: string): Promise<PoolProgress[]> => {
-  const { data } = await axiosClient.get<PoolProgress[]>('/api/admin/pools', { params: { societyId } });
+export const adminListPools = async (societyId: string, page: number) => {
+  const { data } = await axiosClient.get<{ pools: PoolProgress[]; total: number }>('/api/admin/pools/history', { params: { societyId, page } });
   return data;
 };
 

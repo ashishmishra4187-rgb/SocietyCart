@@ -1,5 +1,6 @@
 package com.societycart.domain.pool;
 
+import org.springframework.data.domain.PageRequest;
 import com.societycart.common.ApiExceptions.ConflictException;
 import com.societycart.common.FlatNumbers;
 import com.societycart.domain.fulfillment.PurchaseOrderService;
@@ -95,6 +96,15 @@ public class PoolService {
     public List<PoolView> listForAdmin(UUID societyId, Resident admin) {
         PoolAccess.assertAdminOf(admin, societyId);
         return toViews(poolRepository.findAllForSociety(societyId));
+    }
+
+    public record PoolHistory(List<PoolView> pools, long total) {}
+
+    public PoolHistory historyForAdmin(UUID societyId, Resident admin, int page) {
+        PoolAccess.assertAdminOf(admin, societyId);
+        var ids = poolRepository.historyIds(societyId, PageRequest.of(page, 20));
+        var views = ids.isEmpty() ? List.<PoolView>of() : toViews(poolRepository.historyWithTiers(ids.getContent()));
+        return new PoolHistory(views, ids.getTotalElements());
     }
 
     public AdminPoolView getAdminView(UUID poolId, Resident admin) {

@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.societycart.dto.OrderHistoryPage;
+import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +30,13 @@ public class OrderController {
     @GetMapping("/me")
     public List<OrderView> myOrders(@AuthenticationPrincipal AuthenticatedResident me) {
         return poolOrderService.myOrders(me.residentId());
+    }
+
+    @GetMapping("/me/history")
+    public OrderHistoryPage history(@AuthenticationPrincipal AuthenticatedResident me,
+                                    @RequestParam(defaultValue = "false") boolean past,
+                                    @RequestParam(defaultValue = "0") @Min(0) @Max(100000000) int page) {
+        return poolOrderService.history(me.residentId(), past, page);
     }
 
     /** Only the owner can read an order; anyone else gets 404. */

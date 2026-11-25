@@ -1,5 +1,6 @@
 package com.societycart.domain.fulfillment;
 
+import org.springframework.data.domain.PageRequest;
 import com.societycart.domain.pool.PoolRepository;
 import com.societycart.domain.pool.PoolService;
 import com.societycart.domain.pool.PoolWindow;
@@ -10,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
  * Scheduled batching job that automatically monitors order cut-off windows.
@@ -42,24 +42,22 @@ public class SupplierDispatchJob {
     @Scheduled(fixedDelayString = "${societycart.scheduler.dispatch-rate-ms:60000}", initialDelay = 10000)
     public void scanAndDispatchBatchedPools() {
         Instant now = Instant.now();
-        List<PoolWindow> expiredWindows = poolRepository.findExpiredPoolWindows(PoolWindow.PoolStatus.OPEN, now);
-
-        if (!expiredWindows.isEmpty()) {
-            log.info("SupplierDispatchJob found {} expired pooling window(s) requiring wholesale dispatch.", expiredWindows.size());
-
-            for (PoolWindow pool : expiredWindows) {
+        var batch = PageRequest.of(0, 100);
+        var expiredWindows = poolRepository.expiredIds(PoolWindow.PoolStatus.OPEN, now, batch);
+        while (!expiredWindows.isEmpty()) {
+            for (var poolId : expiredWindows) {
                 try {
-                    log.info("Auto-batching pool window: {} (Society: {}, Volume: {})",
-                            pool.getId(), pool.getSociety().getName(), pool.getCurrentTotalQuantity());
                     // Locking is idempotent and row-locked, so several instances can run this safely.
-                    boolean locked = poolService.lockExpiredPool(pool.getId());
+                    boolean locked = poolService.lockExpiredPool(poolId);
                     if (locked && autoDispatch) {
-                        poolService.dispatchSystem(pool.getId());
+                        poolService.dispatchSystem(poolId);
                     }
                 } catch (Exception e) {
-                    log.error("Failed to auto-settle pool window {}", pool.getId(), e);
+                    log.error("Failed to auto-settle pool window {}", poolId, e);
                 }
             }
+            if (expiredWindows.size() < batch.getPageSize()) break;
+            expiredWindows = poolRepository.expiredIdsAfter(PoolWindow.PoolStatus.OPEN, now, expiredWindows.getLast(), batch);
         }
     }
 }

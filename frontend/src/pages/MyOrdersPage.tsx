@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cancelOrder, myOrders } from '../api/orderApi';
@@ -7,11 +7,11 @@ import { EmptyState, ErrorState, LoadingRegion, Skeleton } from '../components/u
 import { useAuthContext } from '../context/AuthContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { getErrorMessage } from '../lib/errors';
-import { formatINR, round2 } from '../lib/format';
-import type { OrderResponse } from '../types';
+import { formatINR } from '../lib/format';
+import { HistoryPager } from '../components/HistoryPager';
 
 type TabType = 'active' | 'past';
-const PAST: OrderResponse['status'][] = ['DELIVERED', 'CANCELLED'];
+
 
 const tabClass = (on: boolean) =>
   `flex-1 py-2 text-xs font-bold rounded-lg transition-all ${on ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`;
@@ -23,15 +23,16 @@ export const MyOrdersPage: React.FC = () => {
   const { session } = useAuthContext();
 
   const [tab, setTab] = useState<TabType>('active');
+  const [page, setPage] = useState(0);
   const [showBanner, setShowBanner] = useState(() => Boolean((location.state as { justJoined?: boolean } | null)?.justJoined));
   const [cancelError, setCancelError] = useState<string | null>(null);
 
-  const { data: orders, isLoading, isError, refetch } = useQuery<OrderResponse[]>({
-    queryKey: ['orders', 'me'],
-    queryFn: myOrders,
+  const { data: history, isLoading, isError, refetch } = useQuery({
+    queryKey: ['orders', 'me', session?.residentId, tab, page],
+    queryFn: () => myOrders(tab === 'past', page),
     staleTime: 10 * 1000,
     // Prices of open orders keep improving as neighbours join: refresh while any order is still open.
-    refetchInterval: (query) => (query.state.data?.some((o) => o.priceIsFinal === false) ? 15_000 : false),
+    refetchInterval: (query) => (query.state.data?.orders.some((o) => o.priceIsFinal === false) ? 15_000 : false),
   });
 
   const cancelMutation = useMutation({
@@ -44,17 +45,8 @@ export const MyOrdersPage: React.FC = () => {
     onError: (err) => setCancelError(getErrorMessage(err, 'Could not cancel the order. It may already be locked.')),
   });
 
-  // "Active" = anything still on its way (committed, locked, dispatched). "Past" = finished.
-  const { active, past, pastSaved } = useMemo(() => {
-    const all = orders ?? [];
-    const pastOrders = all.filter((o) => PAST.includes(o.status));
-    const saved = pastOrders
-      .filter((o) => o.status === 'DELIVERED')
-      .reduce((acc, o) => acc + Math.max(0, (o.basePrice - o.unitPriceAtCommit) * o.quantity), 0);
-    return { active: all.filter((o) => !PAST.includes(o.status)), past: pastOrders, pastSaved: round2(saved) };
-  }, [orders]);
-
-  const shown = tab === 'active' ? active : past;
+  const shown = history?.orders ?? [];
+  const selectTab = (next: TabType) => { setTab(next); setPage(0); };
   const societyRoute = session?.societyId ? `/s/${session.societyId}` : '/';
   const cancellingId = cancelMutation.isPending ? cancelMutation.variables?.orderId : undefined;
 
@@ -91,11 +83,11 @@ export const MyOrdersPage: React.FC = () => {
       )}
 
       <div className="flex bg-neutral-200/60 p-1 rounded-xl mb-4" role="tablist" aria-label="Order status">
-        <button type="button" role="tab" aria-selected={tab === 'active'} onClick={() => setTab('active')} className={tabClass(tab === 'active')}>
-          Active ({active.length})
+        <button type="button" role="tab" aria-selected={tab === 'active'} onClick={() => selectTab('active')} className={tabClass(tab === 'active')}>
+          Active ({history?.active ?? 0})
         </button>
-        <button type="button" role="tab" aria-selected={tab === 'past'} onClick={() => setTab('past')} className={tabClass(tab === 'past')}>
-          Past ({past.length})
+        <button type="button" role="tab" aria-selected={tab === 'past'} onClick={() => selectTab('past')} className={tabClass(tab === 'past')}>
+          Past ({history?.past ?? 0})
         </button>
       </div>
 
@@ -140,10 +132,11 @@ export const MyOrdersPage: React.FC = () => {
         )}
       </div>
 
-      {tab === 'past' && past.length > 0 && pastSaved > 0 && (
+      <HistoryPager page={page} total={history?.[tab] ?? 0} onPage={setPage} />
+      {tab === 'past' && history && history.saved > 0 && (
         <aside aria-label="Savings summary" className="mt-5 p-4 rounded-2xl bg-savings/10 border border-savings/20 text-center">
           <p className="text-xs font-bold text-neutral-900">
-            You've saved <span className="text-savings font-extrabold">{formatINR(pastSaved)}</span> on delivered orders.
+            You've saved <span className="text-savings font-extrabold">{formatINR(history.saved)}</span> on delivered orders.
           </p>
         </aside>
       )}

@@ -1,5 +1,7 @@
 package com.societycart.domain.pool;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -37,6 +39,18 @@ public interface PoolRepository extends JpaRepository<PoolWindow, UUID> {
             ORDER BY p.createdAt DESC
             """)
     List<PoolWindow> findAllForSociety(@Param("societyId") UUID societyId);
+
+    @Query("select p.id from PoolWindow p where p.society.id = :societyId order by p.createdAt desc, p.id desc")
+    Page<UUID> historyIds(UUID societyId, Pageable pageable);
+
+    @Query("select distinct p from PoolWindow p left join fetch p.priceTiers where p.id in :ids order by p.createdAt desc, p.id desc")
+    List<PoolWindow> historyWithTiers(List<UUID> ids);
+
+    @Query("select p.id from PoolWindow p where p.status = :status and p.endTime <= :now order by p.id")
+    List<UUID> expiredIds(PoolWindow.PoolStatus status, Instant now, Pageable pageable);
+
+    @Query("select p.id from PoolWindow p where p.status = :status and p.endTime <= :now and p.id > :after order by p.id")
+    List<UUID> expiredIdsAfter(PoolWindow.PoolStatus status, Instant now, UUID after, Pageable pageable);
 
     @Query("SELECT p FROM PoolWindow p WHERE p.status = :status AND p.endTime <= :cutoff")
     List<PoolWindow> findExpiredPoolWindows(

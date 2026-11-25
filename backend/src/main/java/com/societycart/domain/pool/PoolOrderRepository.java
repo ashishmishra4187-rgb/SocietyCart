@@ -1,5 +1,7 @@
 package com.societycart.domain.pool;
 
+import java.math.BigDecimal;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,6 +38,26 @@ public interface PoolOrderRepository extends JpaRepository<PoolOrder, UUID> {
             ORDER BY o.createdAt DESC
             """)
     List<PoolOrder> findAllForResident(@Param("residentId") UUID residentId);
+
+    interface StatusTotal {
+        PoolOrder.OrderStatus getStatus();
+        long getOrders();
+        BigDecimal getSavings();
+    }
+
+    @Query("""
+            select o.status as status, count(o) as orders, sum(greatest(0.0, p.basePrice - coalesce(o.finalSettledUnitPrice, o.initialUnitPrice)) * o.quantity) as savings
+            from PoolOrder o join o.poolWindow p where o.resident.id = :residentId group by o.status
+            """)
+    List<StatusTotal> totalsByStatus(UUID residentId);
+
+    @Query("""
+            select o from PoolOrder o join fetch o.poolWindow
+            where o.resident.id = :residentId and o.status in :statuses
+            order by o.createdAt desc, o.id desc
+            """)
+    List<PoolOrder> history(UUID residentId, Collection<PoolOrder.OrderStatus> statuses,
+                            Pageable pageable);
 
     /** Participants per pool in one query (cancelled orders excluded): rows of [poolId, count]. */
     @Query("""

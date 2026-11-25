@@ -423,6 +423,16 @@ class ApiFlowIntegrationTest {
                 .andExpect(status().isNoContent());
         mvc.perform(adminBrowser.with(get("/api/admin/pools/" + poolId), false))
                 .andExpect(jsonPath("$.status").value("DELIVERED"));
+        mvc.perform(resident.with(get("/api/orders/me/history").param("past", "true"), false))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.past").value(1))
+                .andExpect(jsonPath("$.orders[0].orderId").exists())
+                .andExpect(jsonPath("$.saved").value(300));
+        mvc.perform(resident.with(get("/api/orders/me/history").param("page", "-1"), false))
+                .andExpect(status().isBadRequest());
+        mvc.perform(adminBrowser.with(get("/api/admin/pools/history").param("societyId", society.getId().toString()), false))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pools[0].poolWindowId").exists());
     }
 
     private String addProduct(Browser admin, String societyId, String sku, String name) throws Exception {

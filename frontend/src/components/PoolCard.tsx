@@ -12,7 +12,7 @@ export function PoolCard({ pool, featured = false }: { pool: PoolProgress; featu
   const nextPrice = next ? formatINR(projectOrder(pool, next.unitsNeeded).unitPrice) : null;
   return (
     <article className={featured ? 'market-card market-feature' : 'market-card'}>
-      <ProductImage src={pool.imageUrl} name={pool.productName} alt="" loading={featured ? 'eager' : 'lazy'} containerClassName="market-photo" />
+      <ProductImage src={pool.imageUrl} name={pool.productName} captionFallback={featured} alt="" loading={featured ? 'eager' : 'lazy'} containerClassName="market-photo" />
       <div className="market-copy">
         {featured && <span className="market-label">{next ? 'Closest to a price drop' : 'Featured deal'}</span>}
         <h3>{pool.productName}</h3>
@@ -21,7 +21,7 @@ export function PoolCard({ pool, featured = false }: { pool: PoolProgress; featu
           <span style={{ width: `${100 * pool.aggregateQuantity / next.tier.minQuantity}%` }} />
         </div>}
         {featured && <p>{pool.aggregateQuantity} {pool.aggregateQuantity === 1 ? 'unit' : 'units'} pooled{next ? ` · ${next.unitsNeeded} more to unlock ${nextPrice}` : ''}</p>}
-        <p className="market-time">{closesLabel(time)}</p>
+        <p className="market-time">{closesLabel(time)}{pool.participantCount > 0 && <>{' \u00b7 '} {pool.participantCount} {pool.participantCount === 1 ? 'resident' : 'residents'} joined</>}</p>
         <Link className="market-link" to={`/pools/${pool.poolWindowId}`} aria-label={`View deal for ${pool.productName}`}>View deal <span aria-hidden="true">→</span></Link>
       </div>
     </article>

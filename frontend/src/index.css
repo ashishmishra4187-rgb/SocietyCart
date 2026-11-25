@@ -59,3 +59,10 @@
   .market-feature .market-photo { min-height: 0; aspect-ratio: 2.6; }
 }
 @media (prefers-reduced-motion: reduce) { .market-meter span { transition: none; } }
+
+.market-image-caption { position: absolute; bottom: .5rem; left: .5rem; border-radius: .3rem; padding: .15rem .4rem; background: #fffdf5ed; color: #423f34; font-size: .7rem; line-height: 1.4; }
+.market-copy .market-time { font-variant-numeric: tabular-nums; }
+.market-feature .market-photo img[data-catalogue-photo] { padding: clamp(.6rem, 2vw, 1.6rem); }
+@media (max-width: 640px) { .market-feature .market-photo:has(img[data-catalogue-photo]) { aspect-ratio: 1.95; } }
+
+img[data-catalogue-photo] { object-fit: contain; background-color: #f7f4eb; }

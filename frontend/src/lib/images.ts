@@ -56,6 +56,13 @@ export const DEFAULT_PRODUCT_IMAGES: { keywords: string[]; url: string }[] = [
 const FALLBACK_GENERAL_IMAGE =
   'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
 
+// Existing installations store these two sample products with generic stock-photo URLs.
+// Match the exact catalogue entry so a society's own replacement photo always wins.
+const samplePacks = [
+  { name: 'Aashirvaad Shudh Chakki Atta (10kg)', original: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=400&q=80', photo: '/market/aashirvaad-10kg.webp' },
+  { name: 'Fortune Sunlite Refined Sunflower Oil (5L Can)', original: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80', photo: '/market/fortune-sunlite-5l.webp' },
+];
+
 /**
  * Resolves the display image for a product. If imageUrl is null or empty,
  * it returns a relevant high-resolution image matching the product name or category.
@@ -67,6 +74,8 @@ export function resolveProductImage(
 ): string {
   if (imageUrl && imageUrl.trim().length > 0) {
     const trimmed = imageUrl.trim();
+    const sample = samplePacks.find(pack => pack.name === productName && pack.original === trimmed);
+    if (sample) return sample.photo;
     if (SHORTLINK_IMAGE_MAP[trimmed]) {
       return SHORTLINK_IMAGE_MAP[trimmed];
     }

@@ -11,6 +11,7 @@ interface ProductImageProps {
   containerClassName?: string;
   fallbackClassName?: string;
   loading?: 'lazy' | 'eager';
+  captionFallback?: boolean;
 }
 
 export const ProductImage: React.FC<ProductImageProps> = ({
@@ -22,9 +23,9 @@ export const ProductImage: React.FC<ProductImageProps> = ({
   containerClassName = 'w-full h-full relative overflow-hidden bg-neutral-100 flex items-center justify-center',
   fallbackClassName = 'text-neutral-400 flex flex-col items-center justify-center p-2 text-center select-none',
   loading = 'lazy',
+  captionFallback = false,
 }) => {
   const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   const initial = name?.trim() ? name.trim().charAt(0).toUpperCase() : null;
   const resolvedSrc = resolveProductImage(src, name, category);
@@ -34,7 +35,6 @@ export const ProductImage: React.FC<ProductImageProps> = ({
   if (prevSrc.current !== resolvedSrc) {
     prevSrc.current = resolvedSrc;
     setHasError(false);
-    setIsLoaded(false);
   }
 
   if (hasError) {
@@ -57,15 +57,12 @@ export const ProductImage: React.FC<ProductImageProps> = ({
         src={resolvedSrc}
         alt={alt}
         loading={loading}
-        onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
-        className={`${className} transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        data-catalogue-photo={src?.trim() ? true : undefined}
+        className={className}
       />
-      {!isLoaded && (
-        <div className="absolute inset-0 bg-neutral-200/60 animate-pulse flex items-center justify-center" aria-hidden="true">
-          <ImageIcon className="w-5 h-5 text-neutral-400 opacity-50" />
-        </div>
-      )}
+      {captionFallback && !src?.trim() && <span className="market-image-caption">Illustrative photo</span>}
+
     </div>
   );
 };

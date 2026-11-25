@@ -1,4 +1,4 @@
-﻿# SocietyCart
+# SocietyCart
 
 [![Build and tests](https://github.com/ashishmishra4187-rgb/SocietyCart/actions/workflows/ci.yml/badge.svg)](https://github.com/ashishmishra4187-rgb/SocietyCart/actions/workflows/ci.yml)
 
@@ -69,3 +69,7 @@ npm run build
 ```
 
 [GitHub Actions](https://github.com/ashishmishra4187-rgb/SocietyCart/actions/workflows/ci.yml) runs these checks on pushes to main and on pull requests.
+
+## Sample product photography
+
+The two branded demo listings use pack photographs from [BigBasket's Aashirvaad 10 kg listing](https://www.bigbasket.com/pd/126906/aashirvaad-atta-whole-wheat-10-kg-pouch/) and [Fortune's Sunlite product page](https://www.fortunefoods.com/oil/fortune-sunlite-sunflower-oil/). Societies can supply their own catalogue photo when adding or editing a product.

@@ -60,6 +60,7 @@ export const ProductPoolDetails: React.FC = () => {
           src={pool.imageUrl}
           alt={pool.productName}
           name={pool.productName}
+          captionFallback
           loading="eager"
           className="w-full h-full object-cover"
         />

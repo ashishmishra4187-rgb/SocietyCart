@@ -77,4 +77,43 @@ export const projectOrder = (
     newlyUnlocked,
     next: getNextTier({ tiers: pool.tiers, aggregateQuantity: projectedQuantity }),
   };
+  
 };
+/** A deal counts as "closing soon" when it closes within this many hours. */
+export const CLOSING_SOON_HOURS = 6;
+const CLOSING_SOON_MS = CLOSING_SOON_HOURS * 3_600_000;
+
+type DealView = Pick<PoolProgress, 'status' | 'cutoffAt' | 'savingsPercent' | 'aggregateQuantity' | 'tiers'>;
+
+/** Open deals closing within the next {@link CLOSING_SOON_HOURS} hours, soonest first. */
+export const closingSoon = <T extends DealView>(pools: T[], now: number): T[] =>
+  pools
+    .filter((p) => {
+      const ms = new Date(p.cutoffAt).getTime() - now;
+      return p.status === 'OPEN' && ms > 0 && ms <= CLOSING_SOON_MS;
+    })
+    .sort((a, b) => new Date(a.cutoffAt).getTime() - new Date(b.cutoffAt).getTime());
+
+/** Deals that already have a discount unlocked, biggest discount first (more units pooled breaks ties). */
+export const withSavings = <T extends DealView>(pools: T[]): T[] =>
+  pools
+    .filter((p) => p.status === 'OPEN' && p.savingsPercent > 0)
+    .sort((a, b) => b.savingsPercent - a.savingsPercent || b.aggregateQuantity - a.aggregateQuantity);
+
+export interface AlmostThere<T> {
+  pool: T;
+  /** Units the group still needs for the next discount level. */
+  unitsNeeded: number;
+  /** The discount that level unlocks. */
+  discountPercent: number;
+}
+
+/** Deals with no discount yet, ordered by how close the group is to the first level. */
+export const almostThere = <T extends DealView>(pools: T[]): AlmostThere<T>[] =>
+  pools
+    .filter((p) => p.status === 'OPEN' && p.savingsPercent <= 0)
+    .flatMap((pool) => {
+      const next = getNextTier(pool);
+      return next ? [{ pool, unitsNeeded: next.unitsNeeded, discountPercent: next.tier.discountPercent }] : [];
+    })
+    .sort((a, b) => a.unitsNeeded - b.unitsNeeded);

@@ -1,36 +1,69 @@
-import React, { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { PoolCard } from '../components/PoolCard';
 import { SocietySelector } from '../components/SocietySelector';
 import { UserIcon } from '../components/ui/Icons';
 import { EmptyState, ErrorState, LoadingRegion, Skeleton } from '../components/ui/States';
 import { useAuthContext } from '../context/AuthContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useNow } from '../hooks/useNow';
 import { usePoolList, useSocietyDetails } from '../hooks/usePoolList';
 import { useSocietyPoolsLive } from '../hooks/useSocietyPoolsLive';
+import { almostThere, closingSoon, CLOSING_SOON_HOURS, withSavings } from '../lib/pool';
+import type { PoolProgress } from '../types';
 
-type FilterType = 'all' | 'closing' | 'savings';
-const FILTERS: { key: FilterType; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'closing', label: 'Closing soon' },
-  { key: 'savings', label: 'Biggest savings' },
-];
+type View = 'all' | 'closing' | 'savings';
+
+/** The chosen view lives in the address (?view=closing) so it survives a reload and the Back button works. */
+const parseView = (value: string | null): View => (value === 'closing' || value === 'savings' ? value : 'all');
+
+const grid = 'grid grid-cols-1 sm:grid-cols-2 gap-3.5';
+
+const DealGrid: React.FC<{ pools: PoolProgress[]; label: string }> = ({ pools, label }) => (
+  <ul className={grid} aria-label={label}>
+    {pools.map((pool) => (
+      <li key={pool.poolWindowId}>
+        <PoolCard pool={pool} />
+      </li>
+    ))}
+  </ul>
+);
+
+const ShowAllButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="mt-1 px-4 py-2 rounded-xl bg-brand-500 text-white text-xs font-semibold hover:bg-brand-600"
+  >
+    Show all deals
+  </button>
+);
 
 export const SocietyDashboard: React.FC = () => {
   const { societyId } = useParams<{ societyId: string }>();
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = parseView(searchParams.get('view'));
+  const setView = (next: View) => setSearchParams(next === 'all' ? {} : { view: next });
+
   const { session } = useAuthContext();
   const { data: society, isLoading: societyLoading } = useSocietyDetails(societyId);
   const { data: pools, isLoading, isError, refetch } = usePoolList(societyId);
-   useSocietyPoolsLive(societyId);
+  useSocietyPoolsLive(societyId); // new deals appear without a reload
   useDocumentTitle(society?.name ?? 'Deals');
 
-  const openPools = useMemo(() => {
+  // Re-evaluate once a minute so a deal drifts into "Closing soon" while the page is open.
+  const now = useNow();
+
+  const { open, closing, savings, nearly } = useMemo(() => {
     const list = (pools ?? []).filter((p) => p.status === 'OPEN');
-    if (filter === 'closing') return [...list].sort((a, b) => new Date(a.cutoffAt).getTime() - new Date(b.cutoffAt).getTime());
-    if (filter === 'savings') return [...list].sort((a, b) => b.savingsPercent - a.savingsPercent);
-    return list;
-  }, [pools, filter]);
+    return { open: list, closing: closingSoon(list, now), savings: withSavings(list), nearly: almostThere(list) };
+  }, [pools, now]);
+
+  const chips: { key: View; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: open.length },
+    { key: 'closing', label: 'Closing soon', count: closing.length },
+    { key: 'savings', label: 'Biggest savings', count: savings.length },
+  ];
 
   return (
     <>
@@ -61,24 +94,33 @@ export const SocietyDashboard: React.FC = () => {
 
       <SocietySelector currentId={societyId} />
 
-      <div role="group" aria-label="Deal filters" className="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-2">
-        {FILTERS.map(({ key, label }) => (
+      <div role="group" aria-label="Deal views" className="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-2">
+        {chips.map(({ key, label, count }) => (
           <button
             key={key}
             type="button"
-            aria-pressed={filter === key}
-            onClick={() => setFilter(key)}
+            aria-pressed={view === key}
+            onClick={() => setView(key)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              filter === key ? 'bg-brand-500 text-white shadow-sm' : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50'
+              view === key ? 'bg-brand-500 text-white shadow-sm' : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50'
             }`}
           >
             {label}
+            {!isLoading && !isError && (
+              <span
+                className={`ml-1.5 inline-block min-w-[1.25rem] px-1 rounded-full text-[10px] font-bold tabular-nums ${
+                  view === key ? 'bg-white/25 text-white' : 'bg-neutral-100 text-neutral-600'
+                }`}
+              >
+                {count}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {isLoading ? (
-        <LoadingRegion label="Loading deals" className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <LoadingRegion label="Loading deals" className={grid}>
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-2xl border border-neutral-200 p-3.5 shadow-sm">
               <Skeleton className="aspect-square w-full rounded-xl mb-3" />
@@ -90,16 +132,62 @@ export const SocietyDashboard: React.FC = () => {
         </LoadingRegion>
       ) : isError ? (
         <ErrorState title="Couldn't load deals" onRetry={() => void refetch()} />
-      ) : openPools.length === 0 ? (
+      ) : view === 'closing' ? (
+        <section aria-label="Closing soon" className="space-y-3">
+          <div>
+            <h2 className="text-sm font-bold text-neutral-900">Closing soon</h2>
+            <p className="text-xs text-neutral-600">Deals that close within the next {CLOSING_SOON_HOURS} hours, soonest first.</p>
+          </div>
+          {closing.length === 0 ? (
+            <EmptyState
+              title={`Nothing is closing in the next ${CLOSING_SOON_HOURS} hours.`}
+              hint={open.length > 0 ? 'Check back later, or browse every open deal.' : undefined}
+            >
+              {open.length > 0 && <ShowAllButton onClick={() => setView('all')} />}
+            </EmptyState>
+          ) : (
+            <DealGrid pools={closing} label="Deals closing soon" />
+          )}
+        </section>
+      ) : view === 'savings' ? (
+        <section aria-label="Biggest savings" className="space-y-5">
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-sm font-bold text-neutral-900">Biggest savings</h2>
+              <p className="text-xs text-neutral-600">Deals with a discount already unlocked, biggest first.</p>
+            </div>
+            {savings.length === 0 ? (
+              <EmptyState title="No discounts unlocked yet." hint="Discounts unlock as more neighbours join a deal.">
+                {open.length > 0 && <ShowAllButton onClick={() => setView('all')} />}
+              </EmptyState>
+            ) : (
+              <DealGrid pools={savings} label="Deals with savings" />
+            )}
+          </div>
+
+          {nearly.length > 0 && (
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-sm font-bold text-neutral-900">Closest to a discount</h2>
+                <p className="text-xs text-neutral-600">Join one of these to help the group unlock savings.</p>
+              </div>
+              <ul className={grid} aria-label="Deals close to a discount">
+                {nearly.map(({ pool, unitsNeeded, discountPercent }) => (
+                  <li key={pool.poolWindowId}>
+                    <PoolCard pool={pool} />
+                    <p className="mt-1.5 px-1 text-[11px] font-semibold text-savings">
+                      Needs {unitsNeeded} more {unitsNeeded === 1 ? 'unit' : 'units'} to unlock {discountPercent}% off
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      ) : open.length === 0 ? (
         <EmptyState title="No open deals right now." hint="New pools open every morning at 8 AM." />
       ) : (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3.5" aria-label="Open deals">
-          {openPools.map((pool) => (
-            <li key={pool.poolWindowId}>
-              <PoolCard pool={pool} />
-            </li>
-          ))}
-        </ul>
+        <DealGrid pools={open} label="Open deals" />
       )}
     </>
   );

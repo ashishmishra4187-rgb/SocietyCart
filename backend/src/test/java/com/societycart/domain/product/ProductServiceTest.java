@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.societycart.domain.pool.PoolRepository;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -38,6 +39,8 @@ class ProductServiceTest {
     private ProductRepository productRepository;
     @Mock
     private SocietyRepository societyRepository;
+    @Mock
+    private PoolRepository poolRepository;
 
     private ProductService service;
     private Society society;
@@ -46,7 +49,7 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ProductService(productRepository, societyRepository);
+        service = new ProductService(productRepository, societyRepository, poolRepository);
         society = new Society(UUID.randomUUID(), "Greenwood Heights", "GWH-01", "1 Park Rd", "Bengaluru",
                 "Karnataka", "560001", 12.9, 77.6, 500.0, "Gate 2", true);
         admin = new Resident(UUID.randomUUID(), society, "9000000001", "Admin", "A-1", Resident.Role.SOCIETY_ADMIN);

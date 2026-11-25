@@ -306,7 +306,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
               onClick={() => { setEditing('new'); setForm(emptyForm); setFormError(null); setImageLoadError(false); }}
               className="w-full py-3 rounded-2xl border-2 border-dashed border-brand-300 text-xs font-bold text-brand-600 hover:bg-brand-50/50 hover:border-brand-500 transition-all flex items-center justify-center gap-1.5"
             >
-              <span className="text-base font-black">+</span>
+              <span aria-hidden="true" className="text-base font-black">+</span>
               <span>Add a product</span>
             </button>
           ) : (

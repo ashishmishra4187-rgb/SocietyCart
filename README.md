@@ -1,56 +1,63 @@
-@'
-# SocietyCart
+﻿# SocietyCart
 
-**Hyperlocal Housing-Society Bulk Grocery Group-Buying Platform**
+Residents in the same housing society pool grocery orders to earn a volume discount. When a resident crosses a quantity threshold, everyone watching that deal sees the new unit price. Closing the pool settles all participating orders at the final price and produces a flat-by-flat packing list.
 
-SocietyCart enables residents within gated housing societies to pool daily grocery orders together to unlock tiered wholesale volume discounts, track live pool milestones in real time, and automate supplier purchase-order dispatch.
+## Run a local demo
 
----
----
+Install JDK 21 and Node.js 22.12 or later. From the repository root, open two terminals.
 
-## Tech Stack
+**Backend (PowerShell)**
 
-* **Backend:** Java, Spring Boot, Spring Security (OTP Auth + SPA CSRF Protection), Spring WebSocket (STOMP), Spring Data JPA, Flyway Migrations
-* **Database:** PostgreSQL (with H2 `dev` profile for zero-setup local testing)
-* **Frontend:** React, TypeScript, Tailwind CSS, Vite, Axios, STOMP WebSocket Client
-* **Testing:** JUnit 5, Spring Boot Test (`ApiFlowIntegrationTest`), Vitest & React Testing Library
+```powershell
+cd backend
+$env:SPRING_PROFILES_ACTIVE = "h2"
+.\mvnw.cmd spring-boot:run
+```
 
----
+On macOS or Linux, run these commands from the repository root.
 
-## Key Features
+```bash
+cd backend
+SPRING_PROFILES_ACTIVE=h2 sh mvnw spring-boot:run
+```
 
-### Resident Portal
-* **Society & Flat-Verified Onboarding:** OTP-based signup and login validated against society flat numbers (`FlatNumbers`, `OtpService`).
-* **Dynamic Tiered Pricing (`PricingEngine`):** Unit prices drop automatically as aggregate society order quantity crosses configured `PriceTier` thresholds.
-* **Real-Time Pool Updates (`STOMP` WebSockets):** Live progress bars and countdown timers (`LivePoolMeter`, `PoolBroadcaster`) update across connected clients without refreshing.
-* **Order & Savings History:** End-to-end checkout, active pool tracking, and per-order savings breakdown (`MyOrdersPage`, `OrderDetailPage`).
+The API listens on port 8080. The H2 profile seeds demo data and resets when the backend stops. The default dev profile uses PostgreSQL.
 
-### Society Admin Dashboard
-* **Pool & Slab Configuration:** Create group-buying windows, configure tiered discount slabs (`TierEditor`), and edit pool cutoffs (`EditCutoffDialog`).
-* **Automated Supplier Dispatch:** Scheduled `SupplierDispatchJob` closes expired pools and generates consolidated supplier purchase orders (`PurchaseOrderService`).
-* **Flat-Wise Packing Manifests:** Auto-generated resident distribution lists (`PackingListCard`, `PoolDispatchPage`) with CSV export for doorstep delivery.
+**Frontend (second terminal)**
 
----
+```sh
+cd frontend
+npm ci
+npm run dev
+```
 
-## Project Structure
+Open [SocietyCart locally](http://localhost:5173). Vite proxies API and WebSocket traffic to the backend.
 
-```text
-SocietyCart/
-├── backend/                  # Spring Boot REST & WebSocket API
-│   └── src/main/java/com/societycart/
-│       ├── auth/             # OTP verification & resident session auth
-│       ├── config/           # Security, SPA CSRF, WebSocket & scheduler configs
-│       ├── domain/
-│       │   ├── pool/         # PricingEngine, PoolService, PriceTier, PoolWindow
-│       │   ├── fulfillment/  # PurchaseOrderService & SupplierDispatchJob
-│       │   ├── product/      # Society product catalog management
-│       │   └── society/      # Multi-society scoping & sample data seeders
-│       ├── web/              # REST controllers & STOMP PoolBroadcaster
-│       └── resources/db/migration/  # Flyway SQL migrations (V1 - V3)
-├── frontend/                 # React + TypeScript + Tailwind SPA
-│   └── src/
-│       ├── api/              # Typed Axios clients (auth, pools, orders, admin)
-│       ├── components/       # LivePoolMeter, TieredPricingCard, PackingListCard
-│       ├── hooks/            # useStompWebSocket, useCountdown, useAuth
-│       └── pages/            # SocietyDashboard, ProductPoolDetails, SocietyAdminPage
+## Try the two-resident walkthrough
 
+Use separate browser profiles for the admin and each resident so their session cookies stay independent. The local H2 verification code is `123456`.
+
+1. Sign in as the seeded admin with `9000000001`. In the admin dashboard, add a product called **Demo Rice** with SKU `DEMO-RICE` and a usual price of ₹200. Open a deal with a base price of ₹200, a floor of ₹150, a future closing time, and a 10% discount starting at 2 units.
+2. Sign in as the seeded resident with `9000000002` (flat B-202). In the other resident profile, create a resident account with a different demo mobile number and flat C-303. Select the same society as the admin.
+3. Open Demo Rice in each resident profile. Keep the deal details visible and use a second tab in each profile for checkout. Order one unit as B-202. The pool stays at ₹200 per unit.
+4. Order one unit as C-303. When the discount preview appears, select **Claim Discount & Continue**, then **Confirm order**. Both deal screens should show ₹180 per unit without a refresh.
+5. Close the deal from the admin dashboard. Check each resident's order and the admin packing list. Each flat should have one unit at ₹180, for two units and ₹360 overall.
+
+## Implementation
+
+The backend uses Java 21, Spring Boot, Spring Security, Spring Data JPA, and STOMP over WebSockets. PostgreSQL schema changes use Flyway. The frontend uses React, TypeScript, Tailwind CSS, Vite, and React Query.
+
+Residents can track deals, place and cancel eligible orders, and review their savings. Admins manage the product catalog and discount tiers, close deals, review purchase orders, and export packing lists. The scheduler closes expired pools. Supplier dispatch is simulated.
+
+## Verify changes
+
+From `backend`, run `./mvnw.cmd verify` in PowerShell or `sh mvnw verify` on macOS or Linux. From `frontend`, install dependencies with `npm ci`, then run:
+
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+[GitHub Actions](https://github.com/ashishmishra4187-rgb/SocietyCart/actions/workflows/ci.yml) runs these checks on pushes to main and on pull requests.

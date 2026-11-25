@@ -372,6 +372,14 @@ class ApiFlowIntegrationTest {
         String cutoff = Instant.now().plus(2, ChronoUnit.HOURS).toString();
         String sku = "IT-" + System.nanoTime();
         addProduct(adminBrowser, society.getId().toString(), sku, "IT Oil");
+        // A tier that undercuts the floor is a 400 with a readable reason.
+        mvc.perform(adminBrowser.with(post("/api/admin/pools").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"societyId\":\"" + society.getId() + "\",\"productSku\":\"" + sku + "\","
+                                + "\"basePrice\":200,\"floorPrice\":190,\"cutoffAt\":\"" + cutoff + "\","
+                                + "\"tiers\":[{\"minQuantity\":2,\"discountPercent\":50}]}"), true))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("floor")));
+
         MvcResult created = mvc.perform(adminBrowser.with(post("/api/admin/pools").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"societyId\":\"" + society.getId() + "\",\"productSku\":\"" + sku + "\","
                                 + "\"basePrice\":200,\"floorPrice\":120,\"cutoffAt\":\"" + cutoff + "\","
@@ -382,14 +390,6 @@ class ApiFlowIntegrationTest {
                 .andExpect(jsonPath("$.productName").value("IT Oil"))
                 .andReturn();
         String poolId = json.readTree(created.getResponse().getContentAsString()).get("poolWindowId").asText();
-
-        // A tier that undercuts the floor is a 400 with a readable reason.
-        mvc.perform(adminBrowser.with(post("/api/admin/pools").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"societyId\":\"" + society.getId() + "\",\"productSku\":\"" + sku + "\","
-                                + "\"basePrice\":200,\"floorPrice\":190,\"cutoffAt\":\"" + cutoff + "\","
-                                + "\"tiers\":[{\"minQuantity\":2,\"discountPercent\":50}]}"), true))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("floor")));
 
         Browser resident = signIn("9900000002");
         mvc.perform(resident.with(post("/api/pools/" + poolId + "/orders").contentType(MediaType.APPLICATION_JSON)

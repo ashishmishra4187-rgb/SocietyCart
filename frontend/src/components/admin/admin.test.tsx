@@ -39,7 +39,7 @@ describe('ProductManager', () => {
     vi.mocked(adminListProducts).mockResolvedValue([product(), product({ id: 'p2', sku: 'OIL-1L', name: 'Oil 1L', unit: 'L', basePrice: 180, active: false })]);
     open();
     expect(await screen.findByText('Atta 5kg')).toBeInTheDocument();
-    expect(screen.getByText(/ATTA-5KG · ₹450 \/ kg · Staples/)).toBeInTheDocument();
+    expect(screen.getByText('ATTA-5KG').parentElement).toHaveTextContent('ATTA-5KG · ₹450 / kg · Staples');
     expect(screen.getByText('Archived')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore Oil 1L' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Archive Atta 5kg' })).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('ProductManager', () => {
     vi.mocked(adminListProducts).mockResolvedValue([]);
     vi.mocked(adminCreateProduct).mockResolvedValue(product());
     open();
-    await userEvent.click(await screen.findByRole('button', { name: '+ Add a product' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a product' }));
 
     await userEvent.type(screen.getByLabelText('Product name'), '  Whole Wheat Atta 5kg ');
     await userEvent.type(screen.getByLabelText('SKU'), 'ATTA-5KG');
@@ -71,7 +71,7 @@ describe('ProductManager', () => {
   it('refuses bad input before calling the server', async () => {
     vi.mocked(adminListProducts).mockResolvedValue([]);
     open();
-    await userEvent.click(await screen.findByRole('button', { name: '+ Add a product' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a product' }));
     await userEvent.type(screen.getByLabelText('Product name'), 'Atta');
     await userEvent.type(screen.getByLabelText('SKU'), 'a b');
     await userEvent.type(screen.getByLabelText(/Usual shop price/), '450');
@@ -90,7 +90,7 @@ describe('ProductManager', () => {
     vi.mocked(adminListProducts).mockResolvedValue([]);
     vi.mocked(adminCreateProduct).mockRejectedValue(httpError(409, 'A product with SKU ATTA-5KG already exists.'));
     open();
-    await userEvent.click(await screen.findByRole('button', { name: '+ Add a product' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a product' }));
     await userEvent.type(screen.getByLabelText('Product name'), 'Atta');
     await userEvent.type(screen.getByLabelText('SKU'), 'ATTA-5KG');
     await userEvent.type(screen.getByLabelText(/Usual shop price/), '450');

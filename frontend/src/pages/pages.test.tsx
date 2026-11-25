@@ -166,11 +166,10 @@ describe('LoginPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/valid 10-digit/);
   });
 
-  it('shows the demo hints in development builds', () => {
+  it('keeps demo credentials off the sign-in screen', () => {
     open();
-    const hint = screen.getByLabelText('Demo information');
-    expect(hint).toHaveTextContent('123456');
-    expect(hint).toHaveTextContent('SOCIETY-ADMIN-DEMO');
+    expect(screen.getByRole('button', { name: 'Send OTP' })).toBeDisabled();
+    expect(screen.queryByText(/123456|SOCIETY\.ADMIN/)).toBeNull();
   });
 
   it('signs an existing user in with a pasted OTP and stores no token', async () => {

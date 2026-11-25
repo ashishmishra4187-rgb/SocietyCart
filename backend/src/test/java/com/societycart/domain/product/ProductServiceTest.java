@@ -110,7 +110,8 @@ class ProductServiceTest {
     @Test
     @DisplayName("Listing returns the society's products")
     void list() {
-        when(productRepository.findBySocietyIdOrderByNameAsc(society.getId())).thenReturn(List.of(stored("SKU-A"), stored("SKU-B")));
+        List<Product> products = List.of(stored("SKU-A"), stored("SKU-B"));
+        when(productRepository.findBySocietyIdOrderByNameAsc(society.getId())).thenReturn(products);
         assertEquals(2, service.list(society.getId(), admin).size());
     }
 

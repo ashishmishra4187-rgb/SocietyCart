@@ -7,6 +7,10 @@ import type { PoolProgress } from '../types';
 import { ProductImage } from './ui/ProductImage';
 
 export function PoolCard({ pool, featured = false }: { pool: PoolProgress; featured?: boolean }) {
+  const pack = pool.productName.match(/\s+\((\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b\s*([^()]*)\)$/i);
+  const title = pack ? pool.productName.slice(0, pack.index) : pool.productName;
+  const unit = pack?.[2]?.toLowerCase();
+  const packLabel = pack && [pack[1], unit === 'l' ? 'L' : unit === 'ml' ? 'mL' : unit, pack[3]?.trim()].filter(Boolean).join(' ');
   const next = getNextTier(pool);
   const time = useCountdown(pool.cutoffAt);
   const nextPrice = next ? formatINR(projectOrder(pool, next.unitsNeeded).unitPrice) : null;
@@ -15,7 +19,7 @@ export function PoolCard({ pool, featured = false }: { pool: PoolProgress; featu
       <ProductImage src={pool.imageUrl} name={pool.productName} captionFallback={featured} alt="" loading={featured ? 'eager' : 'lazy'} containerClassName="market-photo" />
       <div className="market-copy">
         {featured && <span className="market-label">{next ? 'Closest to a price drop' : 'Featured deal'}</span>}
-        <h3>{pool.productName}</h3>
+        <div><h3>{title}</h3>{packLabel && <p className="market-pack">{packLabel}</p>}</div>
         <div className="market-price">{formatINR(pool.currentUnitPrice)} {hasDiscount(pool.basePrice, pool.currentUnitPrice) && <del>{formatINR(pool.basePrice)}</del>}</div>
         {featured && next && <div className="market-meter" role="progressbar" aria-label="Progress to next discount" aria-valuemin={0} aria-valuemax={next.tier.minQuantity} aria-valuenow={pool.aggregateQuantity}>
           <span style={{ width: `${100 * pool.aggregateQuantity / next.tier.minQuantity}%` }} />

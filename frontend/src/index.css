@@ -27,8 +27,8 @@
 .market-shell { background: #faf7ef; color: #192b23; min-height: 100vh; }
 .market-mast, .market-store { width: min(100%, 1160px); }
 .market-mast { display: flex; align-items: center; justify-content: space-between; padding: 1rem clamp(1rem, 3vw, 2.25rem); border-bottom: 1px solid #d7d2c4; color: #154f38; }
-.market-wordmark, .market-heading, .market-store h1, .market-card h3 { font-family: Georgia, serif; font-weight: 700; }
-.market-wordmark { font-size: 1.65rem; letter-spacing: -.045em; }
+.market-wordmark, .market-heading, .market-store h1 { font-family: Georgia, serif; font-weight: 700; }
+.market-wordmark { display: inline-flex; align-items: center; gap: .5rem; font-size: 1.65rem; letter-spacing: -.045em; }
 .market-nav { display: flex; gap: .5rem; font-weight: 650; }
 .market-nav a { padding: .6rem .85rem; border-radius: .5rem; }
 .market-nav .active { color: white; background: #176044; }
@@ -40,7 +40,7 @@
 .market-photo { position: relative; overflow: hidden; background: #ebe4d4; display: grid; place-items: center; min-height: 9rem; }
 .market-photo img { position: absolute; inset: 0; }
 .market-copy { padding: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; overflow-wrap: anywhere; }
-.market-card h3 { font-size: 1.25rem; line-height: 1.18; color: #154f38; }
+.market-card h3 { font-family: system-ui, sans-serif; font-weight: 650; font-size: 1.25rem; line-height: 1.18; color: #154f38; }
 .market-price { font-weight: 750; font-size: 1.25rem; color: #154f38; }
 .market-price del { color: #68695c; font: 500 .85rem system-ui; }
 .market-time, .market-copy p { font-size: .82rem; color: #49574c; }
@@ -81,3 +81,5 @@ img[data-catalogue-photo] { object-fit: contain; background-color: #f7f4eb; }
   .market-deal-grid .market-copy { align-items: start; }
   .market-deal-grid .market-link { margin-top: 0; align-self: end; justify-self: start; }
 }
+
+.market-copy .market-pack { margin-top: .25rem; font: 500 .9rem/1.4 system-ui, sans-serif; color: #49574c; }

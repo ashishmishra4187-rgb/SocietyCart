@@ -1,3 +1,4 @@
+import { CartIcon } from './ui/Icons';
 import React, { useEffect, useRef } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
@@ -34,7 +35,7 @@ export const AppShell: React.FC<AppShellProps> = ({ nav = false, actionBar = fal
   return (
     <div className="market-shell flex flex-col items-center">
       {nav && <header className={`market-mast ${storefront ? '' : 'market-mast-inner'}`}>
-        <Link className="market-wordmark" to={dealsPath}>SocietyCart</Link>
+        <Link className="market-wordmark" to={dealsPath}><CartIcon className="size-7 shrink-0" aria-hidden="true" />SocietyCart</Link>
         <nav aria-label="Resident navigation" className="market-nav">
           <NavLink to={dealsPath}>Deals</NavLink>
           <NavLink to="/orders">My orders</NavLink>

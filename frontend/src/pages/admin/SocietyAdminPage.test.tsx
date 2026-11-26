@@ -145,7 +145,7 @@ describe('SocietyAdminPage: opening a deal from the product list', () => {
 
     await userEvent.selectOptions(select, 'OIL-1L');
     expect(screen.getByLabelText('Base retail (₹)')).toHaveValue(180);
-    expect(screen.getByText(/per L/)).toBeInTheDocument();
+    expect(screen.getByText(/per L.*SKU/)).toBeInTheDocument();
   });
 
   it('creates the deal with the chosen SKU and no typed product name', async () => {

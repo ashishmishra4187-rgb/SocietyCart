@@ -39,7 +39,7 @@ describe('ProductManager', () => {
     vi.mocked(adminListProducts).mockResolvedValue([product(), product({ id: 'p2', sku: 'OIL-1L', name: 'Oil 1L', unit: 'L', basePrice: 180, active: false })]);
     open();
     expect(await screen.findByText('Atta 5kg')).toBeInTheDocument();
-    expect(screen.getByText('ATTA-5KG').parentElement).toHaveTextContent('ATTA-5KG · ₹450 / kg · Staples');
+    expect(screen.getByText('per kg')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove Atta 5kg' })).toBeInTheDocument();
     expect(screen.queryByText('Oil 1L')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Removed products (1)' }));
@@ -60,12 +60,13 @@ describe('ProductManager', () => {
 
     await userEvent.type(screen.getByLabelText('Product name'), '  Whole Wheat Atta 5kg ');
     await userEvent.type(screen.getByLabelText('SKU'), 'ATTA-5KG');
+    await userEvent.type(screen.getByLabelText(/Pack size/), '5 kg bag');
     await userEvent.type(screen.getByLabelText(/Usual shop price/), '450');
     await userEvent.click(screen.getByRole('button', { name: 'Add product' }));
 
     await waitFor(() => expect(adminCreateProduct).toHaveBeenCalledTimes(1));
     expect(vi.mocked(adminCreateProduct).mock.calls[0]![0]).toEqual({
-      societyId: 'soc-1', sku: 'ATTA-5KG', name: 'Whole Wheat Atta 5kg', basePrice: 450,
+      societyId: 'soc-1', sku: 'ATTA-5KG', name: 'Whole Wheat Atta 5kg', basePrice: 450, unit: '5 kg bag',
     });
   });
 
@@ -75,6 +76,7 @@ describe('ProductManager', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Add a product' }));
     await userEvent.type(screen.getByLabelText('Product name'), 'Atta');
     await userEvent.type(screen.getByLabelText('SKU'), 'a b');
+    await userEvent.type(screen.getByLabelText(/Pack size/), '5 kg bag');
     await userEvent.type(screen.getByLabelText(/Usual shop price/), '450');
     await userEvent.click(screen.getByRole('button', { name: 'Add product' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/SKU must be/);
@@ -94,6 +96,7 @@ describe('ProductManager', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Add a product' }));
     await userEvent.type(screen.getByLabelText('Product name'), 'Atta');
     await userEvent.type(screen.getByLabelText('SKU'), 'ATTA-5KG');
+    await userEvent.type(screen.getByLabelText(/Pack size/), '5 kg bag');
     await userEvent.type(screen.getByLabelText(/Usual shop price/), '450');
     await userEvent.click(screen.getByRole('button', { name: 'Add product' }));
     expect(await screen.findByText('A product with SKU ATTA-5KG already exists.')).toBeInTheDocument();

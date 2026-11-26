@@ -28,7 +28,7 @@ const toForm = (p: Product): FormState => ({
   sku: p.sku,
   name: displayLabel(p.name),
   basePrice: String(p.basePrice),
-  unit: p.unit,
+  unit: p.unit.toLowerCase() === 'unit' ? '' : p.unit,
   category: p.category,
   imageUrl: p.imageUrl ?? '',
 });
@@ -39,7 +39,7 @@ const PRODUCT_PRESETS = [
     name: 'Whole Wheat Atta 5kg',
     sku: 'ATTA-5KG',
     category: 'Staples',
-    unit: 'kg',
+    unit: '5 kg bag',
     basePrice: '450',
     imageUrl: 'https://tse1.mm.bing.net/th/id/OIP.1GfXoe8db2_kRIpw2tXlGQHaEL?pid=ImgDet&rs=1',
     icon: '🌾',
@@ -48,7 +48,7 @@ const PRODUCT_PRESETS = [
     name: 'Premium Basmati Rice 5kg',
     sku: 'RICE-5KG',
     category: 'Staples',
-    unit: 'kg',
+    unit: '5 kg bag',
     basePrice: '520',
     imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80',
     icon: '🍚',
@@ -57,7 +57,7 @@ const PRODUCT_PRESETS = [
     name: 'Cold Pressed Sunflower Oil 1L',
     sku: 'OIL-1L',
     category: 'Cooking Oils',
-    unit: 'L',
+    unit: '1 L bottle',
     basePrice: '185',
     imageUrl: 'https://tse1.mm.bing.net/th/id/OIP.cuJ1hIDBR0sllnADOMs0cQHaHa?pid=ImgDet&rs=1',
     icon: '🌻',
@@ -66,7 +66,7 @@ const PRODUCT_PRESETS = [
     name: 'A2 Gir Cow Milk 1L',
     sku: 'MILK-1L',
     category: 'Dairy',
-    unit: 'L',
+    unit: '1 L bottle',
     basePrice: '90',
     imageUrl: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80',
     icon: '🥛',
@@ -75,7 +75,7 @@ const PRODUCT_PRESETS = [
     name: 'Alphonso Mango Box 1 Dozen',
     sku: 'MANGO-1DZ',
     category: 'Fruits',
-    unit: 'box',
+    unit: '12 pieces',
     basePrice: '850',
     imageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=600&q=80',
     icon: '🥭',
@@ -84,7 +84,7 @@ const PRODUCT_PRESETS = [
     name: 'California Almonds 500g',
     sku: 'ALMOND-500G',
     category: 'Dry Fruits',
-    unit: 'pack',
+    unit: '500 g pack',
     basePrice: '499',
     imageUrl: 'https://images.unsplash.com/photo-1508061252445-5350f3ab0a55?auto=format&fit=crop&w=600&q=80',
     icon: '🥜',
@@ -178,6 +178,10 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
     const error = validateProductForm(form);
     if (error) {
       setFormError(error);
+      return;
+    }
+    if (!form.unit.trim() || /^units?$/i.test(form.unit.trim())) {
+      setFormError('Specify what one order unit contains, such as 1 kg or 6 pieces.');
       return;
     }
     if (editing === 'new') {
@@ -280,10 +284,12 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
                         </span>
                       )}
                     </div>
-                    {/* Includes SKU, price, unit and category to satisfy both tests and resident admins */}
-                    <p className="text-[11px] text-neutral-600 truncate mt-0.5">
-                      <span className="font-mono font-medium text-neutral-800">{displayLabel(p.sku)}</span> · {formatINR(p.basePrice)} / {p.unit} · {p.category}
+                    <p className="mt-1 text-sm font-semibold text-neutral-800">
+                      {formatINR(p.basePrice)} <span className="font-normal">
+                        {p.unit && !/^units?$/i.test(p.unit.trim()) ? `per ${p.unit}` : ' - Pack size not set'}
+                      </span>
                     </p>
+                    <p className="mt-1 text-xs text-neutral-600">SKU {displayLabel(p.sku)} &middot; {p.category}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 text-xs font-semibold">
                     <button
@@ -412,7 +418,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="pm-unit" className={lbl}>Unit</label>
+                  <label htmlFor="pm-unit" className={lbl}>Pack size (one order unit)</label>
                   <input
                     id="pm-unit"
                     type="text"

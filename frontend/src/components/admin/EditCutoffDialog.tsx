@@ -1,3 +1,4 @@
+import { displayLabel } from '../../lib/displayLabel';
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminUpdateCutoff } from '../../api/adminApi';
@@ -58,7 +59,7 @@ const Inner: React.FC<{ pool: PoolProgress; onClose: () => void }> = ({ pool, on
       onConfirm={confirm}
     >
       <p className="mb-3">
-        <strong className="text-neutral-900">{pool.productName}</strong> now closes {formatDateTime(pool.cutoffAt, true)}.
+        <strong className="text-neutral-900">{displayLabel(pool.productName)}</strong> now closes {formatDateTime(pool.cutoffAt, true)}.
         Residents see the new time straight away. Their prices can only get better as more neighbours join.
       </p>
       <label htmlFor="new-cutoff" className="block text-xs font-semibold text-neutral-800 mb-1">New closing time</label>

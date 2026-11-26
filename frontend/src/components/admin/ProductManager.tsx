@@ -1,3 +1,4 @@
+import { displayLabel } from '../../lib/displayLabel';
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminCreateProduct, adminListProducts, adminUpdateProduct } from '../../api/adminApi';
@@ -25,7 +26,7 @@ const emptyForm: FormState = { sku: '', name: '', basePrice: '', unit: '', categ
 
 const toForm = (p: Product): FormState => ({
   sku: p.sku,
-  name: p.name,
+  name: displayLabel(p.name),
   basePrice: String(p.basePrice),
   unit: p.unit,
   category: p.category,
@@ -95,6 +96,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
   const queryClient = useQueryClient();
   const [open, setOpen] = useState<boolean | null>(null); // null = decide from data
   const [editing, setEditing] = useState<Product | 'new' | null>(null);
+  const [showRemoved, setShowRemoved] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -128,8 +130,15 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
 
   const archiveMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => adminUpdateProduct(id, { active }),
-    onSuccess: () => void refresh(),
+    onSuccess: (_, { id }) => {
+      if (editing && editing !== 'new' && editing.id === id) closeForm();
+      void refresh();
+    },
   });
+
+  const activeProducts = (products ?? []).filter(product => product.active);
+  const removedProducts = (products ?? []).filter(product => !product.active);
+  const visibleProducts = showRemoved ? removedProducts : activeProducts;
 
   const pending = createMutation.isPending || updateMutation.isPending;
   // Show the list by default, and the "add" form straight away while the catalog is still empty.
@@ -220,7 +229,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
               My products
             </h2>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-100">
-              {products?.length ?? 0} items
+              {activeProducts.length} items
             </span>
           </div>
           <p className="text-xs text-neutral-500 mt-0.5">
@@ -234,47 +243,53 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
 
       {expanded && (
         <div id="product-manager-body" className="space-y-4 pt-3 border-t border-neutral-100">
+          {(removedProducts.length > 0 || showRemoved) && (
+            <button type="button" aria-pressed={showRemoved} className="text-sm font-semibold text-brand-600 underline"
+              onClick={() => { setShowRemoved(!showRemoved); closeForm(); }}>
+              {showRemoved ? 'Back to active products' : `Removed products (${removedProducts.length})`}
+            </button>
+          )}
           {isLoading ? (
             <LoadingRegion label="Loading products" className="space-y-2">
               {[1, 2].map((i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}
             </LoadingRegion>
           ) : isError ? (
             <ErrorState title="Couldn't load products" onRetry={() => void refetch()} />
-          ) : !products || products.length === 0 ? (
-            <EmptyState title="No products yet." hint="Add your first product below with an image, then open a deal for it." />
+          ) : visibleProducts.length === 0 ? (
+            <EmptyState title={showRemoved ? "No removed products." : "No products yet."} />
           ) : (
             <ul className="divide-y divide-neutral-100">
-              {products.map((p) => (
+              {visibleProducts.map((p) => (
                 <li key={p.id} className="py-3 flex items-center gap-3.5 hover:bg-neutral-50/70 p-2 rounded-2xl transition-colors">
                   <div className="w-14 h-14 rounded-2xl bg-white border border-neutral-200 overflow-hidden shrink-0 shadow-xs">
                     <ProductImage
                       src={p.imageUrl}
-                      alt={p.name}
-                      name={p.name}
+                      alt={displayLabel(p.name)}
+                      name={displayLabel(p.name)}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className={`text-sm font-bold truncate ${p.active ? 'text-neutral-900' : 'text-neutral-500 line-through'}`}>
-                        {p.name}
+                        {displayLabel(p.name)}
                       </p>
                       {!p.active && (
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-700 shrink-0">
-                          Archived
+                          Removed
                         </span>
                       )}
                     </div>
                     {/* Includes SKU, price, unit and category to satisfy both tests and resident admins */}
                     <p className="text-[11px] text-neutral-600 truncate mt-0.5">
-                      <span className="font-mono font-medium text-neutral-800">{p.sku}</span> · {formatINR(p.basePrice)} / {p.unit} · {p.category}
+                      <span className="font-mono font-medium text-neutral-800">{displayLabel(p.sku)}</span> · {formatINR(p.basePrice)} / {p.unit} · {p.category}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 text-xs font-semibold">
                     <button
                       type="button"
                       onClick={() => startEdit(p)}
-                      aria-label={`Edit ${p.name}`}
+                      aria-label={`Edit ${displayLabel(p.name)}`}
                       className="text-brand-600 hover:text-brand-700 font-bold px-2 py-1 rounded-lg hover:bg-brand-50 transition-colors"
                     >
                       Edit
@@ -283,10 +298,10 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
                       type="button"
                       disabled={archiveMutation.isPending}
                       onClick={() => archiveMutation.mutate({ id: p.id, active: !p.active })}
-                      aria-label={`${p.active ? 'Archive' : 'Restore'} ${p.name}`}
+                      aria-label={`${p.active ? 'Remove' : 'Restore'} ${displayLabel(p.name)}`}
                       className="text-neutral-600 hover:text-neutral-900 px-2 py-1 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-50"
                     >
-                      {p.active ? 'Archive' : 'Restore'}
+                      {p.active ? 'Remove' : 'Restore'}
                     </button>
                   </div>
                 </li>
@@ -303,7 +318,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
           {editing === null ? (
             <button
               type="button"
-              onClick={() => { setEditing('new'); setForm(emptyForm); setFormError(null); setImageLoadError(false); }}
+              onClick={() => { setShowRemoved(false); setEditing('new'); setForm(emptyForm); setFormError(null); setImageLoadError(false); }}
               className="w-full py-3 rounded-2xl border-2 border-dashed border-brand-300 text-xs font-bold text-brand-600 hover:bg-brand-50/50 hover:border-brand-500 transition-all flex items-center justify-center gap-1.5"
             >
               <span aria-hidden="true" className="text-base font-black">+</span>
@@ -319,7 +334,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
               <div className="flex items-center justify-between pb-2 border-b border-neutral-200/80">
                 <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
                   <TagIcon className="w-4 h-4 text-brand-600" />
-                  <span>{editing === 'new' ? 'Add a new product' : `Edit ${editing.name}`}</span>
+                  <span>{editing === 'new' ? 'Add a new product' : `Edit ${displayLabel(editing.name)}`}</span>
                 </h3>
                 <span className="text-[10px] font-semibold text-neutral-500">
                   {editing === 'new' ? 'Items will be available for bulk deals' : 'SKU is locked'}
@@ -368,7 +383,7 @@ export const ProductManager: React.FC<{ societyId: string }> = ({ societyId }) =
                   <input
                     id="pm-sku"
                     type="text"
-                    value={form.sku}
+                    value={editing === 'new' ? form.sku : displayLabel(form.sku)}
                     onChange={set('sku')}
                     disabled={editing !== 'new'}
                     placeholder="ATTA-5KG"

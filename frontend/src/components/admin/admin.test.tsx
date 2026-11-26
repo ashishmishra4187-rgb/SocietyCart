@@ -40,9 +40,10 @@ describe('ProductManager', () => {
     open();
     expect(await screen.findByText('Atta 5kg')).toBeInTheDocument();
     expect(screen.getByText('ATTA-5KG').parentElement).toHaveTextContent('ATTA-5KG · ₹450 / kg · Staples');
-    expect(screen.getByText('Archived')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Atta 5kg' })).toBeInTheDocument();
+    expect(screen.queryByText('Oil 1L')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Removed products (1)' }));
     expect(screen.getByRole('button', { name: 'Restore Oil 1L' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Archive Atta 5kg' })).toBeInTheDocument();
   });
 
   it('shows a helpful empty state', async () => {
@@ -119,8 +120,9 @@ describe('ProductManager', () => {
     vi.mocked(adminListProducts).mockResolvedValue([product(), product({ id: 'p2', sku: 'OIL-1L', name: 'Oil 1L', active: false })]);
     vi.mocked(adminUpdateProduct).mockResolvedValue(product());
     open();
-    await userEvent.click(await screen.findByRole('button', { name: 'Archive Atta 5kg' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove Atta 5kg' }));
     await waitFor(() => expect(adminUpdateProduct).toHaveBeenCalledWith('p1', { active: false }));
+    await userEvent.click(screen.getByRole('button', { name: 'Removed products (1)' }));
     await userEvent.click(screen.getByRole('button', { name: 'Restore Oil 1L' }));
     await waitFor(() => expect(adminUpdateProduct).toHaveBeenCalledWith('p2', { active: true }));
   });

@@ -1,3 +1,4 @@
+import { displayLabel } from '../lib/displayLabel';
 import { DiscountPopup } from '../components/DiscountPopup';
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -105,7 +106,7 @@ export const CheckoutPage: React.FC = () => {
         key={pool.poolWindowId}
         percent={closed ? null : projection.newlyUnlocked?.discountPercent ?? null}
         unitPrice={projection.unitPrice}
-        productName={pool.productName}
+        productName={displayLabel(pool.productName)}
         imageUrl={pool.imageUrl}
       />
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center justify-between gap-2">
@@ -148,8 +149,8 @@ export const CheckoutPage: React.FC = () => {
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-neutral-100 overflow-hidden shrink-0 border border-neutral-100 shadow-xs relative">
             <ProductImage
               src={pool.imageUrl}
-              alt={pool.productName}
-              name={pool.productName}
+              alt={displayLabel(pool.productName)}
+              name={displayLabel(pool.productName)}
               className="w-full h-full object-cover"
             />
             {pool.savingsPercent > 0 && (
@@ -166,7 +167,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             <h2 className="text-sm sm:text-base font-bold text-neutral-900 truncate leading-snug">
-              {pool.productName}
+              {displayLabel(pool.productName)}
             </h2>
 
             <div className="flex flex-wrap items-baseline gap-2 mt-1.5">
@@ -186,7 +187,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             <p className="text-[11px] text-neutral-500 mt-1">
-              SKU: <span className="font-mono font-medium text-neutral-700">{pool.productSku}</span>
+              SKU: <span className="font-mono font-medium text-neutral-700">{displayLabel(pool.productSku)}</span>
             </p>
           </div>
         </section>

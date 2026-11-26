@@ -1,3 +1,4 @@
+import { displayLabel } from '../../lib/displayLabel';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminPackingList } from '../../api/adminApi';
@@ -17,9 +18,9 @@ export const PackingListCard: React.FC<{ poolId: string }> = ({ poolId }) => {
   const download = () => {
     if (!data) return;
     const header = ['Flat', 'Resident', 'Phone', `Quantity (${data.unit})`, 'Unit price (INR)', 'Amount (INR)', 'Status'];
-    const rows = data.lines.map((l) => [l.flatNumber, l.residentName, l.phone, l.quantity, l.unitPrice, l.amount, l.status]);
+    const rows = data.lines.map((l) => [l.flatNumber, displayLabel(l.residentName), l.phone, l.quantity, l.unitPrice, l.amount, l.status]);
     const total = ['Total', '', '', data.totalUnits, '', data.totalAmount, ''];
-    downloadCsv(`packing-list-${data.sku}.csv`, [header, ...rows, total]);
+    downloadCsv(`packing-list-${displayLabel(data.sku)}.csv`, [header, ...rows, total]);
   };
 
   return (
@@ -52,7 +53,7 @@ export const PackingListCard: React.FC<{ poolId: string }> = ({ poolId }) => {
       ) : (
         <div className="overflow-x-auto -mx-5 px-5">
           <table className="w-full text-left text-xs">
-            <caption className="sr-only">Units to hand out per flat for {data.productName}</caption>
+            <caption className="sr-only">Units to hand out per flat for {displayLabel(data.productName)}</caption>
             <thead>
               <tr className="border-b border-neutral-100 text-[11px] font-bold uppercase tracking-wider text-neutral-600">
                 <th scope="col" className="py-2">Flat</th>
@@ -66,7 +67,7 @@ export const PackingListCard: React.FC<{ poolId: string }> = ({ poolId }) => {
                 <tr key={`${l.flatNumber}-${i}`}>
                   <th scope="row" className="py-2.5 pr-2 font-bold text-neutral-900 whitespace-nowrap">{l.flatNumber || '—'}</th>
                   <td className="py-2.5 pr-2">
-                    <p className="font-medium text-neutral-900">{l.residentName}</p>
+                    <p className="font-medium text-neutral-900">{displayLabel(l.residentName)}</p>
                     <p className="text-[10px] text-neutral-600">{l.phone} · <StatusBadge status={l.status} /></p>
                   </td>
                   <td className="py-2.5 text-right font-bold text-neutral-900 tabular-nums">{l.quantity}</td>

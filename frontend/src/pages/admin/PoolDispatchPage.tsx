@@ -1,3 +1,4 @@
+import { displayLabel } from '../../lib/displayLabel';
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -126,7 +127,7 @@ export const PoolDispatchPage: React.FC = () => {
           <StatusBadge status={pool.status} />
           <span className="text-xs text-neutral-600 font-mono">PO-{pool.poolWindowId.slice(-6).toUpperCase()}</span>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-neutral-900 leading-tight">{pool.productName}</h1>
+        <h1 className="text-xl font-bold tracking-tight text-neutral-900 leading-tight">{displayLabel(pool.productName)}</h1>
         {isDispatched && dispatchedAt && (
           <p className="text-xs font-medium text-neutral-600">Dispatched on {formatDateTime(dispatchedAt, true)}</p>
         )}
@@ -149,7 +150,7 @@ export const PoolDispatchPage: React.FC = () => {
           </div>
 
           <dl className="mt-3 p-3.5 bg-neutral-900 text-neutral-100 rounded-xl font-mono text-xs space-y-2 border border-neutral-800">
-            <div className="flex justify-between"><dt className="text-neutral-300">SKU code</dt><dd className="font-bold text-white">{po.sku}</dd></div>
+            <div className="flex justify-between"><dt className="text-neutral-300">SKU code</dt><dd className="font-bold text-white">{displayLabel(po.sku)}</dd></div>
             <div className="flex justify-between"><dt className="text-neutral-300">Total pooled units</dt><dd className="font-bold text-green-400">{po.totalQuantity} units</dd></div>
             <div className="flex justify-between"><dt className="text-neutral-300">Agreed unit rate</dt><dd className="font-bold text-white">{formatINR(po.agreedUnitPrice)}</dd></div>
             <div className="flex justify-between pt-1.5 border-t border-neutral-800"><dt className="text-neutral-300">Expected delivery by</dt><dd className="text-amber-300">{formatDateTime(po.requiredBy)}</dd></div>

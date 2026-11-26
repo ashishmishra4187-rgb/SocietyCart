@@ -1,3 +1,4 @@
+import { displayLabel } from '../../lib/displayLabel';
 import { HistoryPager } from '../../components/HistoryPager';
 import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -179,7 +180,7 @@ export const SocietyAdminPage: React.FC = () => {
                 </option>
                 {activeProducts.map((p) => (
                   <option key={p.id} value={p.sku}>
-                    {p.name} ({p.sku})
+                    {displayLabel(p.name)} ({displayLabel(p.sku)})
                   </option>
                 ))}
               </select>
@@ -191,15 +192,15 @@ export const SocietyAdminPage: React.FC = () => {
                   <div className="w-14 h-14 rounded-xl bg-white border border-neutral-200 overflow-hidden shrink-0">
                     <ProductImage
                       src={selectedProduct.imageUrl}
-                      alt={selectedProduct.name}
-                      name={selectedProduct.name}
+                      alt={displayLabel(selectedProduct.name)}
+                      name={displayLabel(selectedProduct.name)}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0 text-xs text-neutral-700">
-                    <p className="font-bold text-neutral-900 truncate">{selectedProduct.name}</p>
+                    <p className="font-bold text-neutral-900 truncate">{displayLabel(selectedProduct.name)}</p>
                     <p className="text-[11px] text-neutral-500 mt-0.5">
-                      per {selectedProduct.unit} · {selectedProduct.category} · SKU: <span className="font-mono">{selectedProduct.sku}</span>
+                      per {selectedProduct.unit} · {selectedProduct.category} · SKU: <span className="font-mono">{displayLabel(selectedProduct.sku)}</span>
                     </p>
                   </div>
                 </div>
@@ -300,13 +301,13 @@ export const SocietyAdminPage: React.FC = () => {
                         <div className="w-10 h-10 rounded-lg bg-neutral-100 border border-neutral-200 overflow-hidden shrink-0 shadow-xs">
                           <ProductImage
                             src={pool.imageUrl}
-                            alt={pool.productName}
-                            name={pool.productName}
+                            alt={displayLabel(pool.productName)}
+                            name={displayLabel(pool.productName)}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-neutral-900 line-clamp-1">{pool.productName}</p>
+                          <p className="font-bold text-neutral-900 line-clamp-1">{displayLabel(pool.productName)}</p>
                           <span className="text-[10px] text-neutral-500">Closes {formatDateTime(pool.cutoffAt)}</span>
                         </div>
                       </div>
@@ -321,7 +322,7 @@ export const SocietyAdminPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setEditingTime(pool)}
-                              aria-label={`Change closing time of ${pool.productName}`}
+                              aria-label={`Change closing time of ${displayLabel(pool.productName)}`}
                               className={`${linkBtn} text-brand-600 hover:text-brand-700`}
                             >
                               Edit time
@@ -329,7 +330,7 @@ export const SocietyAdminPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => { closeMutation.reset(); setClosing(pool); }}
-                              aria-label={`Close ${pool.productName} now`}
+                              aria-label={`Close ${displayLabel(pool.productName)} now`}
                               className={`${linkBtn} text-neutral-700 hover:text-neutral-900`}
                             >
                               Close now
@@ -350,7 +351,7 @@ export const SocietyAdminPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => { cancelMutation.reset(); setCancelling(pool); }}
-                            aria-label={`Cancel ${pool.productName}`}
+                            aria-label={`Cancel ${displayLabel(pool.productName)}`}
                             className={`${linkBtn} text-red-700 hover:text-red-800`}
                           >
                             Cancel
@@ -381,7 +382,7 @@ export const SocietyAdminPage: React.FC = () => {
         onCancel={() => setClosing(null)}
         onConfirm={() => closing && closeMutation.mutate(closing.poolWindowId)}
       >
-        Residents will no longer be able to join <strong className="text-neutral-900">{closing?.productName}</strong> and the price will be settled at{' '}
+        Residents will no longer be able to join <strong className="text-neutral-900">{displayLabel(closing?.productName ?? '')}</strong> and the price will be settled at{' '}
         {closing ? formatINR(closing.currentUnitPrice) : ''} per unit.
       </ConfirmDialog>
 
@@ -396,7 +397,7 @@ export const SocietyAdminPage: React.FC = () => {
         onCancel={() => setCancelling(null)}
         onConfirm={() => cancelling && cancelMutation.mutate(cancelling.poolWindowId)}
       >
-        <strong className="text-neutral-900">{cancelling?.productName}</strong> will be cancelled
+        <strong className="text-neutral-900">{displayLabel(cancelling?.productName ?? '')}</strong> will be cancelled
         {cancelling && cancelling.participantCount > 0
           ? ` and the orders of ${cancelling.participantCount} ${cancelling.participantCount === 1 ? 'neighbour' : 'neighbours'} will be cancelled with it`
           : ''}

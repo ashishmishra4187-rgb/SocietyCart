@@ -1,3 +1,4 @@
+import { displayLabel } from '../lib/displayLabel';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatINR, round2 } from '../lib/format';
@@ -22,8 +23,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center border border-neutral-100 shadow-xs relative">
           <ProductImage
             src={order.imageUrl}
-            alt={order.productName}
-            name={order.productName}
+            alt={displayLabel(order.productName)}
+            name={displayLabel(order.productName)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
@@ -31,7 +32,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onCancel, isCancell
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
             <h3 className="text-sm font-bold text-neutral-900 truncate leading-snug group-hover:text-brand-600 transition-colors">
-              {order.productName}
+              {displayLabel(order.productName)}
             </h3>
             <StatusBadge status={order.status} />
           </div>

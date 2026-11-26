@@ -1,3 +1,4 @@
+import { displayLabel } from '../lib/displayLabel';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -36,7 +37,7 @@ export const OrderDetailPage: React.FC = () => {
     // While the pool is open the price can still drop as neighbours join, so keep it fresh.
     refetchInterval: (query) => (query.state.data?.priceIsFinal === false ? 10_000 : false),
   });
-  useDocumentTitle(order ? `Order · ${order.productName}` : 'Order');
+  useDocumentTitle(order ? `Order · ${displayLabel(order.productName)}` : 'Order');
 
   if (isLoading) {
     return (
@@ -96,8 +97,8 @@ export const OrderDetailPage: React.FC = () => {
             <div className="w-16 h-16 rounded-xl bg-white overflow-hidden shrink-0 border border-neutral-200/60 shadow-xs relative">
               <ProductImage
                 src={order.imageUrl}
-                alt={order.productName}
-                name={order.productName}
+                alt={displayLabel(order.productName)}
+                name={displayLabel(order.productName)}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -107,7 +108,7 @@ export const OrderDetailPage: React.FC = () => {
                 <span>Bulk Pool Item</span>
               </div>
               <h1 className="text-sm font-bold text-neutral-900 leading-snug truncate mt-0.5">
-                {order.productName}
+                {displayLabel(order.productName)}
               </h1>
               <p className="text-xs font-semibold text-brand-600 mt-1">
                 {order.quantity} {order.quantity === 1 ? 'unit' : 'units'} · {formatINR(order.unitPriceAtCommit)}/unit

@@ -1,3 +1,4 @@
+import { displayLabel } from '../lib/displayLabel';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { JoinDealBar } from '../components/JoinDealBar';
@@ -20,7 +21,7 @@ export const ProductPoolDetails: React.FC = () => {
   const { data: pool, isLoading, isError, refetch } = usePool(poolId);
   const { connected } = useStompWebSocket(poolId);
   const time = useCountdown(pool?.cutoffAt);
-  useDocumentTitle(pool?.productName ?? 'Deal');
+  useDocumentTitle(displayLabel(pool?.productName ?? 'Deal'));
 
   const back = session?.societyId ? `/s/${session.societyId}` : '/';
 
@@ -58,8 +59,8 @@ export const ProductPoolDetails: React.FC = () => {
       <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden bg-white mb-4 border border-neutral-200 shadow-sm">
         <ProductImage
           src={pool.imageUrl}
-          alt={pool.productName}
-          name={pool.productName}
+          alt={displayLabel(pool.productName)}
+          name={displayLabel(pool.productName)}
           captionFallback
           loading="eager"
           className="w-full h-full object-cover"
@@ -76,7 +77,7 @@ export const ProductPoolDetails: React.FC = () => {
           <TagIcon className="w-3.5 h-3.5" />
           <span>{pool.supplierName ? `Wholesale from ${pool.supplierName}` : 'Direct wholesale batch'}</span>
         </div>
-        <h1 className="text-2xl font-black tracking-tight text-neutral-900 leading-tight">{pool.productName}</h1>
+        <h1 className="text-2xl font-black tracking-tight text-neutral-900 leading-tight">{displayLabel(pool.productName)}</h1>
       </header>
 
       <section className="mb-4" aria-label="Tiered pricing details">

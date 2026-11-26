@@ -1,3 +1,4 @@
+import { displayLabel } from '../lib/displayLabel';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, BagIcon } from '../components/ui/Icons';
@@ -27,7 +28,7 @@ export const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (profile) {
-      setName(profile.name || '');
+      setName(displayLabel(profile.name || ''));
       setFlatNumber(profile.flatNumber || '');
     }
   }, [profile]);
@@ -58,7 +59,7 @@ export const ProfilePage: React.FC = () => {
 
   const flatOk = isValidFlat(flatNumber);
   const nameOk = name.trim().length > 0 && name.trim().length <= 60;
-  const dirty = name.trim() !== (profile.name || '').trim() || flatNumber.trim() !== (profile.flatNumber || '').trim();
+  const dirty = name.trim() !== (displayLabel(profile.name || '')).trim() || flatNumber.trim() !== (profile.flatNumber || '').trim();
   const canSave = dirty && flatOk && nameOk && !update.isPending;
   const societyRoute = profile.societyId ? `/s/${profile.societyId}` : '/';
 
@@ -88,9 +89,9 @@ export const ProfilePage: React.FC = () => {
 
       <section aria-label="Personal details" className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm flex flex-col items-center text-center">
         <div aria-hidden="true" className="w-16 h-16 rounded-full bg-brand-500/10 border-2 border-brand-500/20 text-brand-600 font-extrabold text-xl flex items-center justify-center mb-3">
-          {initials(profile.name)}
+          {initials(displayLabel(profile.name || ''))}
         </div>
-        <h2 className="text-base font-bold text-neutral-900">{profile.name || 'Resident'}</h2>
+        <h2 className="text-base font-bold text-neutral-900">{displayLabel(profile.name || 'Resident')}</h2>
         <p className="text-xs font-medium text-neutral-600 mt-0.5 tracking-wider font-mono">{maskPhone(profile.phone)}</p>
       </section>
 

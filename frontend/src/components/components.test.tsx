@@ -122,7 +122,7 @@ describe('DiscountPopup', () => {
 
   it('can be dismissed with the CTA button', async () => {
     render(<DiscountPopup percent={20} unitPrice={160} />);
-    const cta = screen.getByRole('button', { name: /Claim Discount/i });
+    const cta = screen.getByRole('button', { name: /Continue shopping/i });
     await userEvent.click(cta);
     expect(screen.queryByRole('dialog')).toBeNull();
   });

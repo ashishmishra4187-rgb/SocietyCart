@@ -66,3 +66,18 @@
 @media (max-width: 640px) { .market-feature .market-photo:has(img[data-catalogue-photo]) { aspect-ratio: 1.95; } }
 
 img[data-catalogue-photo] { object-fit: contain; background-color: #f7f4eb; }
+
+/* Adjacent cards share four text rows, including when a name wraps to three lines. */
+@media (min-width: 640px) {
+  .market-deal-grid > li,
+  .market-deal-grid .market-card,
+  .market-deal-grid .market-copy {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+  }
+  .market-deal-grid .market-card { row-gap: .35rem; }
+  .market-deal-grid .market-photo { grid-row: span 4; }
+  .market-deal-grid .market-copy { align-items: start; }
+  .market-deal-grid .market-link { margin-top: 0; align-self: end; justify-self: start; }
+}

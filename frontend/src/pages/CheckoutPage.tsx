@@ -1,3 +1,4 @@
+import { DiscountPopup } from '../components/DiscountPopup';
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -100,6 +101,13 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <>
+      <DiscountPopup
+        key={pool.poolWindowId}
+        percent={closed ? null : projection.newlyUnlocked?.discountPercent ?? null}
+        unitPrice={projection.unitPrice}
+        productName={pool.productName}
+        imageUrl={pool.imageUrl}
+      />
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center justify-between gap-2">
         <BackLink to={`/pools/${pool.poolWindowId}`}>Back to details</BackLink>
         <h1 className="text-base font-bold text-neutral-900">Confirm your order</h1>

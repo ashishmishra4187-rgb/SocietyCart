@@ -20,7 +20,7 @@ const parseView = (value: string | null): View => (value === 'closing' || value 
 const grid = 'grid grid-cols-1 sm:grid-cols-2 gap-3.5';
 
 const DealGrid: React.FC<{ pools: PoolProgress[]; label: string }> = ({ pools, label }) => (
-  <ul className={grid} aria-label={label}>
+  <ul className={`${grid} market-deal-grid`} aria-label={label}>
     {pools.map((pool) => (
       <li key={pool.poolWindowId}>
         <PoolCard pool={pool} />

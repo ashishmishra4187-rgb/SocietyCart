@@ -60,10 +60,15 @@ export const DiscountPopup: React.FC<DiscountPopupProps> = ({
       lastPercent.current = percent;
       counter.current += 1;
       setShown({ percent, unitPrice, key: counter.current, productName, imageUrl });
-      const timer = window.setTimeout(() => setShown(null), 4500);
-      return () => window.clearTimeout(timer);
     }
+    lastPercent.current = percent;
   }, [percent, unitPrice, productName, imageUrl]);
+
+  useEffect(() => {
+    if (!shown) return;
+    const timer = window.setTimeout(() => setShown(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [shown]);
 
   // Handle ESC key to dismiss dialog
   useEffect(() => {
@@ -80,9 +85,9 @@ export const DiscountPopup: React.FC<DiscountPopupProps> = ({
   return (
     <div
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-label={`${shown.percent}% discount unlocked celebration`}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      className="pointer-events-none fixed inset-x-0 top-3 z-50 flex justify-center px-4 animate-fadeIn"
       onClick={(e) => {
         // Dismiss if clicking backdrop
         if (e.target === e.currentTarget) setShown(null);
@@ -90,7 +95,7 @@ export const DiscountPopup: React.FC<DiscountPopupProps> = ({
     >
       <div
         key={shown.key}
-        className="relative max-w-sm w-full bg-gradient-to-br from-brand-600 via-teal-700 to-emerald-800 text-white rounded-3xl shadow-2xl p-6 sm:p-7 text-center border border-white/20 overflow-hidden animate-pop"
+        className="pointer-events-auto relative max-w-sm w-full bg-gradient-to-br from-brand-600 via-teal-700 to-emerald-800 text-white rounded-3xl shadow-2xl p-6 sm:p-7 text-center border border-white/20 overflow-hidden animate-pop"
       >
         {/* Floating Confetti Particles radiating from center */}
         <span aria-hidden="true" className="pointer-events-none">
@@ -151,7 +156,7 @@ export const DiscountPopup: React.FC<DiscountPopupProps> = ({
         ) : null}
 
         <p className="text-xs text-teal-100/90 font-medium mt-1 leading-snug">
-          Unlocked for your order & all your society neighbours!
+          Confirm your order to unlock this price for the pool.
         </p>
 
         {shown.unitPrice !== null && (
@@ -168,7 +173,7 @@ export const DiscountPopup: React.FC<DiscountPopupProps> = ({
           onClick={() => setShown(null)}
           className="mt-5 w-full py-2.5 px-4 rounded-xl bg-white hover:bg-neutral-100 text-teal-900 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5"
         >
-          <span>Claim Discount & Continue</span>
+          <span>Continue shopping</span>
         </button>
       </div>
     </div>

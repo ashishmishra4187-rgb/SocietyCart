@@ -60,7 +60,7 @@ describe('SocietyAdminPage: deals table actions follow the deal status', () => {
     vi.mocked(adminListPools).mockResolvedValue({ pools: [pool('2', 'LOCKED')], total: 1 });
     open();
     const row = await rowFor('Product 2');
-    expect(row.getByRole('link', { name: 'Dispatch' })).toHaveAttribute('href', '/admin/pools/2/dispatch');
+    expect(row.getByRole('link', { name: 'View PO' })).toHaveAttribute('href', '/admin/pools/2/dispatch');
     expect(row.getByRole('button', { name: /Cancel Product 2/ })).toBeInTheDocument();
     expect(row.queryByRole('button', { name: /Change closing time/ })).toBeNull();
   });

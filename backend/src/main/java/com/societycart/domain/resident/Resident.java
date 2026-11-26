@@ -17,6 +17,7 @@ public class Resident {
     public enum Role {
         RESIDENT,
         SOCIETY_ADMIN,
+        SHOPKEEPER,
         PLATFORM_ADMIN
     }
 

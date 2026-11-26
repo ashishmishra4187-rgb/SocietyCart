@@ -55,7 +55,7 @@ Use separate browser profiles for the admin and each resident so their session c
 
 The backend uses Java 21, Spring Boot, Spring Security, Spring Data JPA, and STOMP over WebSockets. PostgreSQL schema changes use Flyway. The frontend uses React, TypeScript, Tailwind CSS, Vite, and React Query.
 
-Residents can track deals, place and cancel eligible orders, and review their savings. Admins manage the product catalog and discount tiers, close deals, review purchase orders, and export packing lists. The scheduler closes expired pools. Supplier dispatch is simulated.
+Residents can track deals, place and cancel eligible orders, and review their savings. Admins manage the product catalog and discount tiers, close deals, review purchase orders, and export packing lists. The scheduler closes expired pools. After cutoff, a shopkeeper records dispatch from **Profile ? Ready to dispatch**. Supplier integration is simulated. To provision a shopkeeper, assign the SHOPKEEPER role to a verified account in the appropriate society through trusted database administration, then sign in again.
 
 ## Verify changes
 

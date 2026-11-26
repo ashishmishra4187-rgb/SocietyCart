@@ -179,11 +179,27 @@ public class PoolService {
         return lockInternal(pool);
     }
 
-    /** Admin sends the consolidated purchase order to the supplier. Cannot be repeated. */
+    @Transactional(readOnly = true)
+    public List<PoolView> readyForDispatch(Resident shopkeeper) {
+        requireShopkeeper(shopkeeper);
+        return toViews(poolRepository.findBySocietyIdAndStatus(shopkeeper.getSociety().getId(), PoolWindow.PoolStatus.LOCKED)
+                .stream().filter(pool -> !pool.getEndTime().isAfter(clock.instant())).toList());
+    }
+
+    private void requireShopkeeper(Resident caller) {
+        if (caller.getRole() != Resident.Role.SHOPKEEPER) {
+            throw new com.societycart.common.ApiExceptions.ForbiddenException("Shopkeeper access required");
+        }
+    }
+
     @Transactional
-    public AdminPoolView dispatchPool(UUID poolId, Resident admin) {
+    public AdminPoolView dispatchPool(UUID poolId, Resident shopkeeper) {
+        requireShopkeeper(shopkeeper);
         PoolWindow pool = lockRow(poolId);
-        PoolAccess.assertAdminOf(admin, pool.getSociety().getId());
+        PoolAccess.assertVisible(shopkeeper, pool);
+        if (pool.getEndTime().isAfter(clock.instant())) {
+            throw new IllegalStateException("Dispatch is available after the pool cutoff.");
+        }
         dispatchInternal(pool);
         return viewMapper.toAdminView(pool, participants(poolId));
     }
@@ -292,14 +308,6 @@ public class PoolService {
         }
         lockInternal(pool);
         return true;
-    }
-
-    @Transactional
-    public void dispatchSystem(UUID poolId) {
-        PoolWindow pool = lockRow(poolId);
-        if (pool.getStatus() == PoolWindow.PoolStatus.LOCKED) {
-            dispatchInternal(pool);
-        }
     }
 
     // ------------------------------------------------------------------ internals

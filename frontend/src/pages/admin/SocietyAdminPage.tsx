@@ -282,15 +282,15 @@ export const SocietyAdminPage: React.FC = () => {
           <EmptyState title="No pools yet." />
         ) : (
           <div className="overflow-x-auto -mx-5 px-5">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[560px] text-left text-xs">
               <caption className="sr-only">Pools for this society</caption>
               <thead>
                 <tr className="border-b border-neutral-100 text-[11px] font-bold uppercase tracking-wider text-neutral-600">
                   <th scope="col" className="py-2.5">Product</th>
                   <th scope="col" className="py-2.5">Status</th>
                   <th scope="col" className="py-2.5 text-right">Units</th>
-                  <th scope="col" className="py-2.5 text-right">Price</th>
-                  <th scope="col" className="py-2.5 text-right">Actions</th>
+                  <th scope="col" className="py-2.5 px-3 text-right">Price</th>
+                  <th scope="col" className="py-2.5 pl-3 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -314,9 +314,9 @@ export const SocietyAdminPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-1"><StatusBadge status={pool.status} /></td>
                     <td className="py-3 text-right font-semibold text-neutral-900 tabular-nums">{pool.aggregateQuantity}</td>
-                    <td className="py-3 text-right font-bold text-neutral-900 tabular-nums">{formatINR(pool.currentUnitPrice)}</td>
-                    <td className="py-3 text-right pl-2">
-                      <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+                    <td className="py-3 px-3 text-right whitespace-nowrap font-bold text-neutral-900 tabular-nums">{formatINR(pool.currentUnitPrice)}</td>
+                    <td className="py-3 pl-3 text-left">
+                      <div className="flex flex-wrap justify-start gap-x-3 gap-y-1">
                         {pool.status === 'OPEN' && (
                           <>
                             <button
@@ -339,7 +339,7 @@ export const SocietyAdminPage: React.FC = () => {
                         )}
                         {pool.status === 'LOCKED' && (
                           <Link to={`/admin/pools/${pool.poolWindowId}/dispatch`} className={`${linkBtn} text-brand-600 hover:text-brand-700`}>
-                            Dispatch
+                            View PO
                           </Link>
                         )}
                         {(pool.status === 'DISPATCHED' || pool.status === 'DELIVERED') && (

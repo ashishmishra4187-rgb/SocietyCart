@@ -61,6 +61,7 @@ class PoolServiceTest {
     private PoolService service;
 
     private Society society;
+    private Resident shopkeeper;
     private Resident admin;
     private Resident resident;
     private PoolWindow pool;
@@ -72,6 +73,7 @@ class PoolServiceTest {
 
         society = new Society(UUID.randomUUID(), "Greenwood Heights", "GWH-01", "1 Park Rd", "Bengaluru",
                 "Karnataka", "560001", 12.9, 77.6, 500.0, "Gate 2", true);
+        shopkeeper = new Resident(UUID.randomUUID(), society, "9000000009", "Shopkeeper", "S1", Resident.Role.SHOPKEEPER);
         admin = new Resident(UUID.randomUUID(), society, "9000000001", "Admin", "A-1", Resident.Role.SOCIETY_ADMIN);
         resident = new Resident(UUID.randomUUID(), society, "9000000002", "Res", "B-2", Resident.Role.RESIDENT);
 
@@ -147,7 +149,9 @@ class PoolServiceTest {
         PoolOrder order = confirmedOrder();
         service.lockPool(pool.getId(), admin);
 
-        service.dispatchPool(pool.getId(), admin);
+        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), shopkeeper));
+        pool.setEndTime(NOW);
+        service.dispatchPool(pool.getId(), shopkeeper);
 
         verify(purchaseOrderService, times(1)).generateAndDispatchPurchaseOrder(pool);
         assertEquals(PoolWindow.PoolStatus.DISPATCHED, pool.getStatus());
@@ -158,7 +162,7 @@ class PoolServiceTest {
     @Test
     @DisplayName("A pool that is still open cannot be dispatched")
     void dispatchRequiresLocked() {
-        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), admin));
+        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), shopkeeper));
         verify(purchaseOrderService, never()).generateAndDispatchPurchaseOrder(any());
     }
 
@@ -167,9 +171,11 @@ class PoolServiceTest {
     void dispatchTwiceRefused() {
         confirmedOrder();
         service.lockPool(pool.getId(), admin);
-        service.dispatchPool(pool.getId(), admin);
+        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), shopkeeper));
+        pool.setEndTime(NOW);
+        service.dispatchPool(pool.getId(), shopkeeper);
 
-        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), admin));
+        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), shopkeeper));
         verify(purchaseOrderService, times(1)).generateAndDispatchPurchaseOrder(any());
     }
 
@@ -178,7 +184,9 @@ class PoolServiceTest {
     void markDelivered() {
         PoolOrder order = confirmedOrder();
         service.lockPool(pool.getId(), admin);
-        service.dispatchPool(pool.getId(), admin);
+        assertThrows(IllegalStateException.class, () -> service.dispatchPool(pool.getId(), shopkeeper));
+        pool.setEndTime(NOW);
+        service.dispatchPool(pool.getId(), shopkeeper);
 
         service.markDelivered(pool.getId(), admin);
 

@@ -1,6 +1,6 @@
 export type PoolStatus = 'OPEN' | 'LOCKED' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED';
 export type OrderStatus = 'COMMITTED' | 'LOCKED' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED';
-export type ResidentRole = 'RESIDENT' | 'SOCIETY_ADMIN' | 'PLATFORM_ADMIN';
+export type ResidentRole = 'RESIDENT' | 'SHOPKEEPER' | 'SOCIETY_ADMIN' | 'PLATFORM_ADMIN';
 
 /** Society admins manage their society's pools; platform admins can manage any society. */
 export const isAdminRole = (role?: ResidentRole | null): boolean => role === 'SOCIETY_ADMIN' || role === 'PLATFORM_ADMIN';

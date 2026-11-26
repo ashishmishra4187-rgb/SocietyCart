@@ -41,6 +41,9 @@ class ApiFlowIntegrationTest {
     @Autowired
     private ResidentRepository residentRepository;
 
+    @Autowired
+    private com.societycart.domain.pool.PoolRepository poolRepository;
+
     private final ObjectMapper json = new ObjectMapper();
 
     /** A signed-in browser: its session cookie plus the XSRF cookie it would echo back in a header. */
@@ -401,8 +404,8 @@ class ApiFlowIntegrationTest {
                 .andExpect(jsonPath("$.status").value("OPEN"))
                 .andExpect(jsonPath("$.supplierPOPayload").doesNotExist());
 
-        mvc.perform(adminBrowser.with(post("/api/admin/pools/" + poolId + "/dispatch"), true))
-                .andExpect(status().isConflict());
+        mvc.perform(adminBrowser.with(post("/api/shopkeeper/pools/" + poolId + "/dispatch"), true))
+                .andExpect(status().isForbidden());
 
         mvc.perform(adminBrowser.with(post("/api/admin/pools/" + poolId + "/close"), true))
                 .andExpect(status().isNoContent());
@@ -415,9 +418,19 @@ class ApiFlowIntegrationTest {
                 .andExpect(jsonPath("$[0].status").value("LOCKED"))
                 .andExpect(jsonPath("$[0].unitPriceAtCommit").value(150.0));
 
-        mvc.perform(adminBrowser.with(post("/api/admin/pools/" + poolId + "/dispatch"), true))
+        signIn("9900000003");
+        var account = residentRepository.findByPhone("9900000003").orElseThrow();
+        account.setRole(com.societycart.domain.resident.Resident.Role.SHOPKEEPER);
+        residentRepository.save(account);
+        Browser shop = login("9900000003");
+        mvc.perform(shop.with(post("/api/shopkeeper/pools/" + poolId + "/dispatch"), true))
+                .andExpect(status().isConflict());
+        var expired = poolRepository.findById(java.util.UUID.fromString(poolId)).orElseThrow();
+        expired.setEndTime(java.time.Instant.now().minusSeconds(1));
+        poolRepository.save(expired);
+        mvc.perform(shop.with(post("/api/shopkeeper/pools/" + poolId + "/dispatch"), true))
                 .andExpect(status().isNoContent());
-        mvc.perform(adminBrowser.with(post("/api/admin/pools/" + poolId + "/dispatch"), true))
+        mvc.perform(shop.with(post("/api/shopkeeper/pools/" + poolId + "/dispatch"), true))
                 .andExpect(status().isConflict());
         mvc.perform(adminBrowser.with(post("/api/admin/pools/" + poolId + "/deliver"), true))
                 .andExpect(status().isNoContent());
@@ -552,7 +565,7 @@ class ApiFlowIntegrationTest {
                 .andExpect(jsonPath("$[0].poolStatus").value("CANCELLED"));
 
         mvc.perform(admin.with(post("/api/admin/pools/" + poolId + "/close"), true)).andExpect(status().isConflict());
-        mvc.perform(admin.with(post("/api/admin/pools/" + poolId + "/dispatch"), true)).andExpect(status().isConflict());
+        mvc.perform(admin.with(post("/api/shopkeeper/pools/" + poolId + "/dispatch"), true)).andExpect(status().isForbidden());
         mvc.perform(admin.with(post("/api/admin/pools/" + poolId + "/cancel"), true)).andExpect(status().isConflict());
     }
 

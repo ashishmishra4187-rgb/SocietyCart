@@ -104,6 +104,9 @@ public class AuthController {
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_RESIDENT"));
+        if (resident.getRole() == Resident.Role.SHOPKEEPER) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_SHOPKEEPER"));
+        }
         if (resident.getRole() == Resident.Role.SOCIETY_ADMIN || resident.getRole() == Resident.Role.PLATFORM_ADMIN) {
             authorities.add(new SimpleGrantedAuthority("ROLE_SOCIETY_ADMIN"));
         }

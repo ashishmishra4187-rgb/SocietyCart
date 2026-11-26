@@ -1,3 +1,4 @@
+import { ShopkeeperDispatch } from '../components/ShopkeeperDispatch';
 import { displayLabel } from '../lib/displayLabel';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -109,6 +110,8 @@ export const ProfilePage: React.FC = () => {
   <span className="text-[11px] text-neutral-600 font-medium italic text-right max-w-[130px] leading-tight">  </span>
 )}
       </section>
+
+      {session?.role === 'SHOPKEEPER' && <ShopkeeperDispatch />}
 
       <section aria-label="Delivery settings" className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
         <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-700 mb-4">Delivery details</h2>

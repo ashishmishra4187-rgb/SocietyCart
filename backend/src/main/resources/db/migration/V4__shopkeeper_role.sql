@@ -1,0 +1,2 @@
+ALTER TABLE residents DROP CONSTRAINT chk_residents_role;
+ALTER TABLE residents ADD CONSTRAINT chk_residents_role CHECK (role IN ('RESIDENT','SOCIETY_ADMIN','PLATFORM_ADMIN','SHOPKEEPER'));

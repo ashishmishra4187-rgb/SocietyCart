@@ -42,10 +42,6 @@ export const adminDeliverPool = async (id: string): Promise<void> => {
   await axiosClient.post(`/api/admin/pools/${encodeURIComponent(id)}/deliver`);
 };
 
-export const adminDispatchPool = async (id: string): Promise<void> => {
-  await axiosClient.post(`/api/admin/pools/${encodeURIComponent(id)}/dispatch`);
-};
-
 export interface ProductPayload {
   societyId: string;
   sku: string;

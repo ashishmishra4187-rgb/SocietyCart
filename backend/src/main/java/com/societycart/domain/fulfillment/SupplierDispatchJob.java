@@ -6,7 +6,6 @@ import com.societycart.domain.pool.PoolService;
 import com.societycart.domain.pool.PoolWindow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +14,7 @@ import java.time.Instant;
 /**
  * Scheduled batching job that automatically monitors order cut-off windows.
  * When a pooling window reaches its end time, locks it and settles prices. The supplier purchase order is
- * sent by a society admin (or automatically when societycart.dispatch.auto-dispatch=true).
+ * dispatched by the shopkeeper after cutoff.
  */
 @Component
 public class SupplierDispatchJob {
@@ -25,14 +24,11 @@ public class SupplierDispatchJob {
     private final PoolRepository poolRepository;
     private final PoolService poolService;
 
-    private final boolean autoDispatch;
 
     public SupplierDispatchJob(PoolRepository poolRepository,
-                               PoolService poolService,
-                               @Value("${societycart.dispatch.auto-dispatch:false}") boolean autoDispatch) {
+                               PoolService poolService) {
         this.poolRepository = poolRepository;
         this.poolService = poolService;
-        this.autoDispatch = autoDispatch;
     }
 
     /**
@@ -48,10 +44,7 @@ public class SupplierDispatchJob {
             for (var poolId : expiredWindows) {
                 try {
                     // Locking is idempotent and row-locked, so several instances can run this safely.
-                    boolean locked = poolService.lockExpiredPool(poolId);
-                    if (locked && autoDispatch) {
-                        poolService.dispatchSystem(poolId);
-                    }
+                    poolService.lockExpiredPool(poolId);
                 } catch (Exception e) {
                     log.error("Failed to auto-settle pool window {}", poolId, e);
                 }

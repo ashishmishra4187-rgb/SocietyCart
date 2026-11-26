@@ -40,7 +40,7 @@
 - Every state change takes `SELECT ... FOR UPDATE` on the pool row (join, cancel, close, dispatch, scheduler).
 - Idempotent join (`Idempotency-Key`), one active order per resident per pool (service check **and** partial unique index), per-order max quantity.
 - Broadcasts run **after commit**; failures never roll back the business operation.
-- Lifecycle is now explicit: `OPEN -> LOCKED` (prices settled) `-> DISPATCHED` (PO sent) `-> COMPLETED` (delivered). The scheduler locks expired pools; a society admin reviews and dispatches. Set `societycart.dispatch.auto-dispatch=true` to restore auto-dispatch.
+- Lifecycle is now explicit: `OPEN -> LOCKED` (prices settled) `-> DISPATCHED` (PO sent) `-> COMPLETED` (delivered). The scheduler locks expired pools; a shopkeeper in the same society confirms dispatch after cutoff.
 - Zero-order pools are cancelled instead of "settled".
 - Engine: base price below the first tier; settlement capped at the quoted price; identity (not `equals`) for the current-tier flag; order-count overload (no more loading all orders); server-side tier planning with floor-price validation.
 - PO excludes cancelled orders and uses unguessable numbers.

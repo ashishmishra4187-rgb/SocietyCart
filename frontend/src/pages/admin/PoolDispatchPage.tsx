@@ -1,12 +1,11 @@
 import { displayLabel } from '../../lib/displayLabel';
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { adminDeliverPool, adminDispatchPool, adminGetPool } from '../../api/adminApi';
+import { adminDeliverPool, adminGetPool } from '../../api/adminApi';
 import { PackingListCard } from '../../components/admin/PackingListCard';
 import { BackLink } from '../../components/ui/BackLink';
-import { CheckCircle, InfoCircle } from '../../components/ui/Icons';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { CheckCircle } from '../../components/ui/Icons';
 import { ErrorState, LoadingRegion, Skeleton } from '../../components/ui/States';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { useAuthContext } from '../../context/AuthContext';
@@ -20,7 +19,6 @@ export const PoolDispatchPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { session } = useAuthContext();
   const queryClient = useQueryClient();
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const adminHome = session?.societyId ? `/admin/s/${session.societyId}` : '/';
 
@@ -28,17 +26,6 @@ export const PoolDispatchPage: React.FC = () => {
     queryKey: ['admin', 'pool', id],
     queryFn: () => adminGetPool(id as string),
     enabled: Boolean(id),
-  });
-
-  const dispatchMutation = useMutation({
-    mutationFn: () => adminDispatchPool(id as string),
-    onSuccess: async () => {
-      setShowConfirm(false);
-      // Take the real dispatch timestamp and status from the server rather than faking them.
-      await queryClient.invalidateQueries({ queryKey: ['admin', 'pool', id] });
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'pools'] });
-      void queryClient.invalidateQueries({ queryKey: ['pools'] });
-    },
   });
 
   const deliverMutation = useMutation({
@@ -110,7 +97,6 @@ export const PoolDispatchPage: React.FC = () => {
     );
   }
 
-  const isLocked = pool.status === 'LOCKED';
   const isDispatched = pool.status === 'DISPATCHED' || pool.status === 'DELIVERED';
   const totalValue = lineTotal(po.agreedUnitPrice, po.totalQuantity);
   const dispatchedAt = po.dispatchedAt ?? pool.dispatchedAt;
@@ -173,27 +159,6 @@ export const PoolDispatchPage: React.FC = () => {
 
       <PackingListCard poolId={pool.poolWindowId} />
 
-      {dispatchMutation.isError && !showConfirm && (
-        <p role="alert" className="flex items-start gap-2 text-xs font-medium text-red-800 bg-red-50 border border-red-200 rounded-xl p-3">
-          <InfoCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          {getErrorMessage(dispatchMutation.error, 'Dispatch failed. Please try again.')}
-        </p>
-      )}
-
-      <ConfirmDialog
-        open={showConfirm}
-        title="Confirm supplier dispatch"
-        confirmLabel="Yes, dispatch"
-        pendingLabel="Dispatching…"
-        pending={dispatchMutation.isPending}
-        error={dispatchMutation.isError ? getErrorMessage(dispatchMutation.error, 'Dispatch failed. Please try again.') : null}
-        onCancel={() => setShowConfirm(false)}
-        onConfirm={() => dispatchMutation.mutate()}
-      >
-        Send a <strong className="text-neutral-900">{po.totalQuantity}-unit</strong> order at{' '}
-        <strong className="text-neutral-900">{formatINR(po.agreedUnitPrice)}/unit</strong> to the supplier? This cannot be undone.
-      </ConfirmDialog>
-
       <aside aria-label="Dispatch actions" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-200 py-3 px-4 pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
         <div className="max-w-[640px] mx-auto">
           {pool.status === 'DISPATCHED' ? (
@@ -218,14 +183,7 @@ export const PoolDispatchPage: React.FC = () => {
               <span>{pool.status === 'DELIVERED' ? 'Delivered to residents' : 'Dispatched to supplier'}</span>
             </div>
           ) : (
-            <button
-              type="button"
-              disabled={!isLocked || dispatchMutation.isPending}
-              onClick={() => { dispatchMutation.reset(); setShowConfirm(true); }}
-              className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-            >
-              Dispatch to supplier ({po.totalQuantity} units)
-            </button>
+            <p className="text-center text-sm">Awaiting shopkeeper dispatch after the pool cutoff.</p>
           )}
         </div>
       </aside>

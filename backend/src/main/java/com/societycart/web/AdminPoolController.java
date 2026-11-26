@@ -90,12 +90,6 @@ public class AdminPoolController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/dispatch")
-    public ResponseEntity<Void> dispatch(@AuthenticationPrincipal AuthenticatedResident me, @PathVariable UUID id) {
-        poolService.dispatchPool(id, residentService.requireActive(me.residentId()));
-        return ResponseEntity.noContent().build();
-    }
-
     @PostMapping("/{id}/deliver")
     public ResponseEntity<Void> deliver(@AuthenticationPrincipal AuthenticatedResident me, @PathVariable UUID id) {
         poolService.markDelivered(id, residentService.requireActive(me.residentId()));

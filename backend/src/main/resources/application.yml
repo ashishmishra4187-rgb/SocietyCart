@@ -49,10 +49,6 @@ societycart:
     dispatch-rate-ms: 60000
   geofence:
     default-radius-meters: 500.0
-  dispatch:
-    # false: locking a pool at cut-off settles prices, then a society admin reviews and dispatches.
-    # true: dispatch to the supplier automatically right after locking (previous behaviour).
-    auto-dispatch: false
   cors:
     # Comma-separated web origins allowed to call the API with credentials.
     allowed-origins: ${SOCIETYCART_ALLOWED_ORIGINS:http://localhost:5173}

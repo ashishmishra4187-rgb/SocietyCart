@@ -71,6 +71,7 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher("/error")).permitAll()
                         .requestMatchers(post("/api/auth/otp"), post("/api/auth/signup"), post("/api/auth/verify"), post("/api/auth/logout")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/auth/societies")).permitAll()
+                        .requestMatchers(antMatcher("/api/shopkeeper/**")).hasRole("SHOPKEEPER")
                         .requestMatchers(antMatcher("/api/admin/**")).hasAnyRole("SOCIETY_ADMIN", "PLATFORM_ADMIN")
                         .requestMatchers(post("/api/societies")).hasRole("PLATFORM_ADMIN")
                         .requestMatchers(antMatcher("/api/societies/nearby")).hasRole("PLATFORM_ADMIN")

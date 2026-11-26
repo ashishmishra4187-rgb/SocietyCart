@@ -269,7 +269,7 @@ export const SocietyAdminPage: React.FC = () => {
       <section aria-label="Existing pools" className="bg-white rounded-3xl border border-neutral-200 p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-neutral-900">Existing pools</h2>
-          <span className="text-xs font-semibold text-neutral-600">{history?.total ?? 0} total</span>
+          {history && <span className="text-xs font-semibold text-neutral-600">{history.total} total</span>}
         </div>
 
         {isLoading ? (

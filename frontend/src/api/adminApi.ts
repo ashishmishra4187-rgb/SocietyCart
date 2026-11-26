@@ -1,3 +1,4 @@
+import { getErrorMessage, getStatus } from '../lib/errors';
 import axiosClient from './axiosClient';
 import type { AdminPoolDetail, PackingList, PoolProgress, Product } from '../types';
 
@@ -12,8 +13,15 @@ export interface CreatePoolPayload {
 }
 
 export const adminListPools = async (societyId: string, page: number) => {
-  const { data } = await axiosClient.get<{ pools: PoolProgress[]; total: number }>('/api/admin/pools/history', { params: { societyId, page } });
-  return data;
+  try {
+    const { data } = await axiosClient.get<{ pools: PoolProgress[]; total: number }>('/api/admin/pools/history', { params: { societyId, page } });
+    return data;
+  } catch (error) {
+    // Earlier servers resolve "history" against /pools/{id} and reject the non-UUID.
+    if (getStatus(error) !== 400 || getErrorMessage(error, '') !== "Invalid value for 'id'.") throw error;
+    const { data } = await axiosClient.get<PoolProgress[]>('/api/admin/pools', { params: { societyId } });
+    return { pools: data.slice(page * 20, (page + 1) * 20), total: data.length };
+  }
 };
 
 export const adminGetPool = async (id: string): Promise<AdminPoolDetail> => {

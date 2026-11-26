@@ -2,7 +2,6 @@ import { CartIcon } from './ui/Icons';
 import React, { useEffect, useRef } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
-import { BottomNav } from './BottomNav';
 
 interface AppShellProps {
   /** Show the resident tab bar. */
@@ -34,7 +33,7 @@ export const AppShell: React.FC<AppShellProps> = ({ nav = false, actionBar = fal
 
   return (
     <div className="market-shell flex flex-col items-center">
-      {nav && <header className={`market-mast ${storefront ? '' : 'market-mast-inner'}`}>
+      {nav && <header className="market-mast">
         <Link className="market-wordmark" to={dealsPath}><CartIcon className="size-7 shrink-0" aria-hidden="true" />SocietyCart</Link>
         <nav aria-label="Resident navigation" className="market-nav">
           <NavLink to={dealsPath}>Deals</NavLink>
@@ -53,12 +52,11 @@ export const AppShell: React.FC<AppShellProps> = ({ nav = false, actionBar = fal
         ref={mainRef}
         tabIndex={-1}
         className={`w-full ${storefront ? 'market-store' : 'max-w-[640px]'} min-h-screen px-4 pt-4 shadow-md focus:outline-none ${
-          nav ? 'pb-24' : actionBar ? 'pb-28' : 'pb-12'
+          actionBar ? 'pb-28' : 'pb-12'
         }`}
       >
         <Outlet />
       </main>
-      {nav && <BottomNav />}
     </div>
   );
 };

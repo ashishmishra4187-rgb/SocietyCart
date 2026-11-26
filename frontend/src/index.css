@@ -32,7 +32,11 @@
 .market-nav { display: flex; gap: .5rem; font-weight: 650; }
 .market-nav a { padding: .6rem .85rem; border-radius: .5rem; }
 .market-nav .active { color: white; background: #176044; }
-@media (max-width: 767px) { .market-nav, .market-mast-inner { display: none; } }
+@media (max-width: 480px) {
+  .market-mast { flex-wrap: wrap; gap: .5rem; }
+  .market-nav { width: 100%; }
+  .market-nav a { text-align: center; flex: 1; min-height: 44px; }
+}
 .market-store { padding-inline: clamp(1rem, 3vw, 2.25rem); box-shadow: none; }
 .market-store h1 { color: #154f38; font-size: clamp(2rem, 4vw, 3rem); }
 .market-heading { color: #154f38; font-size: 1.6rem; }
